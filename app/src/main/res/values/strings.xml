@@ -1,0 +1,19 @@
+<resources>
+    <!-- General Strings -->
+    <string name="app_name">Contacto Efectivo</string>
+    <string name="home_route">home_screen</string>
+    <string name="delivery_man">Giovanni Arellano</string>
+    <!-- Log in Strings -->
+    <string name="logo_desc">Logo - Contacto Efectivo</string>
+    <string name="user_str">Usuario</string>
+    <string name="pass_str">Contraseña</string>
+    <string name="log_btn">Ingresar</string>
+    <string name="menu_opt">Operaciones</string>
+    <string name="menu_rta">Ruta</string>
+    <string name="menu_sts">Estatus</string>
+    <string name="opt_terceros">Terceros</string>
+    <string name="opt_prod">Producto</string>
+    <string name="opt_clt">Cliente</string>
+    <!--string name="default_user">Ingresa tu numbre de usuario</string>
+    <string name="default_pass">Ingresa tu contraseña</string-->
+</resources>
