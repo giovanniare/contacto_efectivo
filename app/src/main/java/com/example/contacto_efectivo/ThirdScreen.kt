@@ -1,5 +1,6 @@
 package com.example.contacto_efectivo
 
+import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -16,6 +17,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -25,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.motionEventSpy
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -41,8 +46,66 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 @Composable
-private fun StartRoute(onNavigateToHome: () -> Unit) {
+fun TomarEvidencia(
+    operationDialog: MutableState<Boolean>,
+    onNavigateToGallery: () -> Unit,
+    onPhotoScreen: () -> Unit)
+{
+
+    if (operationDialog.value) {
+        AlertDialog(
+            onDismissRequest = { operationDialog.value = false},
+            title = { Text(text = "Adjunta evidencia") },
+            text = {
+                Column {
+                    Text("Toma una foto o subela desde tu galeria")
+                    Button(
+                        onClick = {  },
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(text = "Galeria")
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Cargar",
+                            tint = Color(0xFF213E85)
+                        )
+                    }
+                    Button(
+                        onClick = { onPhotoScreen() },
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(text = "Camara")
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Foto",
+                            tint = Color(0xFF213E85)
+                        )
+                    }
+                }},
+            confirmButton = {
+                Button(onClick = {  }) {
+                    Text("Buscar")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { operationDialog.value = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+}
+
+@SuppressLint("ResourceAsColor")
+@Composable
+private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit) {
     var count by remember { mutableIntStateOf(0) }
+    val opIdDialog = remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -54,6 +117,7 @@ private fun StartRoute(onNavigateToHome: () -> Unit) {
                 text = "Paquetes Recibidos",
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
+                color = colorResource(id = R.color.blue_btn),
                 modifier = Modifier
                     .weight(2f)
                     .align(Alignment.CenterVertically)
@@ -78,12 +142,13 @@ private fun StartRoute(onNavigateToHome: () -> Unit) {
                 text = "Adjunta evidencia",
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
+                color = colorResource(id = R.color.blue_btn),
                 modifier = Modifier
                     .weight(2f)
                     .align(Alignment.CenterVertically)
             )
             Button(
-                onClick = { /* Aquí va la lógica al presionar el botón */ },
+                onClick = { opIdDialog.value = true },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 modifier = Modifier
                     .weight(1f)
@@ -112,12 +177,21 @@ private fun StartRoute(onNavigateToHome: () -> Unit) {
             )
         }
     }
+
+    if (opIdDialog.value) {
+        TomarEvidencia(
+            operationDialog = opIdDialog,
+            onNavigateToGallery = { /* Aquí va la lógica al presionar el botón */ },
+            onPhotoScreen = { onNavigateToPhoto() }
+        )
+    }
 }
 
 @Composable
-private fun EndRoute(onNavigateToHome: () -> Unit) {
+private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit) {
     var entregados by remember { mutableIntStateOf(0) }
     var devoluciones by remember { mutableIntStateOf(0) }
+    val opIdDialog = remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -129,6 +203,7 @@ private fun EndRoute(onNavigateToHome: () -> Unit) {
                 text = "Paquetes Entregados",
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
+                color = colorResource(R.color.blue_btn),
                 modifier = Modifier
                     .weight(2f)
                     .align(Alignment.CenterVertically)
@@ -153,6 +228,7 @@ private fun EndRoute(onNavigateToHome: () -> Unit) {
                 text = "Devoluciones",
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
+                color = colorResource(R.color.blue_btn),
                 modifier = Modifier
                     .weight(2f)
                     .align(Alignment.CenterVertically)
@@ -177,12 +253,13 @@ private fun EndRoute(onNavigateToHome: () -> Unit) {
                 text = "Adjunta evidencia",
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
+                color = colorResource(R.color.blue_btn),
                 modifier = Modifier
                     .weight(2f)
                     .align(Alignment.CenterVertically)
             )
             Button(
-                onClick = { /* Aquí va la lógica al presionar el botón */ },
+                onClick = { opIdDialog.value = true },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 modifier = Modifier
                     .weight(1f)
@@ -211,10 +288,18 @@ private fun EndRoute(onNavigateToHome: () -> Unit) {
             )
         }
     }
+
+    if (opIdDialog.value) {
+        TomarEvidencia(
+            operationDialog = opIdDialog,
+            onNavigateToGallery = { /* Aquí va la lógica al presionar el botón */ },
+            onPhotoScreen = { onNavigateToPhoto() }
+        )
+    }
 }
 
 @Composable
-fun ThirdScreen(onNavigateToHome: () -> Unit) {
+fun ThirdScreen(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf("Iniciar/Finalizar") }
 
@@ -285,13 +370,12 @@ fun ThirdScreen(onNavigateToHome: () -> Unit) {
                 }
 
                 when (selectedItem) {
-                    "Iniciar ruta" -> StartRoute(onNavigateToHome)
-                    "Iniciar/Finalizar" -> StartRoute(onNavigateToHome)
-                    "Finalizar ruta" -> EndRoute(onNavigateToHome)
+                    "Iniciar ruta" -> StartRoute(onNavigateToHome, onNavigateToPhoto)
+                    "Iniciar/Finalizar" -> StartRoute(onNavigateToHome, onNavigateToPhoto)
+                    "Finalizar ruta" -> EndRoute(onNavigateToHome, onNavigateToPhoto)
                     else -> Text(text = "Ocurrio un error. Reportalo a tu analizta")
                 }
             }
         }
     }
-
 }

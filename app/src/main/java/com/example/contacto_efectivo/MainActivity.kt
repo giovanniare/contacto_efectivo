@@ -57,9 +57,10 @@ fun MyApp() {
             })
         }
         composable("third_screen") {
-            ThirdScreen(onNavigateToHome = {
-                navController.navigate("home_screen")
-            })
+            ThirdScreen(
+                onNavigateToHome = { navController.navigate("home_screen") },
+                onNavigateToPhoto = { navController.navigate("photo_screen")}
+            )
         }
         composable("update_screen") {
             UpdateScreen(onNavigateToHome = {
@@ -70,6 +71,9 @@ fun MyApp() {
             BarcodeScannerScreen(onNavigateToHome = {
                 navController.navigate("home_screen")
             })
+        }
+        composable("photo_screen") {
+            CameraCaptureScreen()
         }
     }
 }

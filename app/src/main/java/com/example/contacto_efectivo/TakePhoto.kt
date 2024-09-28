@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import java.text.SimpleDateFormat
 import java.util.*
@@ -30,7 +31,8 @@ import java.util.concurrent.Executors
 @Composable
 fun CameraCaptureScreen() {
     val context = LocalContext.current
-    var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
+    val lifecycleOwner = LocalContext.current as LifecycleOwner
+    val imageCapture = remember { mutableStateOf<ImageCapture?>(null) }
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val executor: ExecutorService = remember { Executors.newSingleThreadExecutor() }
 
@@ -57,12 +59,12 @@ fun CameraCaptureScreen() {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center
         ) {
-            CameraPreview(imageCapture, cameraProviderFuture, executor)
+            CameraPreview(imageCapture, cameraProviderFuture, executor, lifecycleOwner)
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(onClick = {
-                imageCapture?.let { capturePhoto(context, it, executor) }
+                imageCapture.value?.let { capturePhoto(context, it, executor) }
             }) {
                 Text("Tomar Foto")
             }
@@ -76,7 +78,8 @@ fun CameraCaptureScreen() {
 fun CameraPreview(
     imageCapture: MutableState<ImageCapture?>,
     cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
-    executor: ExecutorService
+    executor: ExecutorService,
+    lifecycleOwner: LifecycleOwner
 ) {
     val context = LocalContext.current
     AndroidView(
@@ -98,13 +101,13 @@ fun CameraPreview(
                 val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                    ctx as androidx.lifecycle.LifecycleOwner,
+                    lifecycleOwner,  // Cambio importante
                     cameraSelector,
                     preview,
                     capture
                 )
             } catch (e: Exception) {
-                Toast.makeText(context, "Error iniciando la cámara", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Error iniciando la cámara: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
 
             previewView
