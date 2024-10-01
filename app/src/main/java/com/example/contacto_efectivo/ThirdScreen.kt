@@ -1,7 +1,11 @@
 package com.example.contacto_efectivo
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,12 +42,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.motionEventSpy
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.activity.compose.rememberLauncherForActivityResult as rememberLauncherForActivityResult1
 
 @Composable
 fun TomarEvidencia(
@@ -53,6 +59,22 @@ fun TomarEvidencia(
 {
 
     if (operationDialog.value) {
+        val context = LocalContext.current
+        val launcher = rememberLauncherForActivityResult1(
+            contract = ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+            uri?.let {
+                val imagePath = getRealPathFromURI(context, it)
+                uploadImage(context, imagePath) // Sube la imagen seleccionada
+                operationDialog.value = false
+            } ?: run {
+                Toast.makeText(
+                    context,
+                    "Error al seleccionar la imagen",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
         AlertDialog(
             onDismissRequest = { operationDialog.value = false},
             title = { Text(text = "Adjunta evidencia") },
@@ -60,7 +82,9 @@ fun TomarEvidencia(
                 Column {
                     Text("Toma una foto o subela desde tu galeria")
                     Button(
-                        onClick = {  },
+                        onClick = {
+                            launcher.launch("image/*")
+                        },
                         modifier = Modifier
                             .padding(16.dp)
                             .align(Alignment.CenterHorizontally)
