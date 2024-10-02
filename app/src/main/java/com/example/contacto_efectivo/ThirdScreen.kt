@@ -127,7 +127,7 @@ fun TomarEvidencia(
 
 @SuppressLint("ResourceAsColor")
 @Composable
-private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit) {
+private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit, viewModel: OperationsViewModel) {
     var count by remember { mutableIntStateOf(0) }
     val opIdDialog = remember { mutableStateOf(false) }
 
@@ -185,7 +185,9 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
             }
         }
         Button(
-            onClick = { onNavigateToHome() },
+            onClick = {
+                viewModel.thirdOperationInCourse.value = true
+                onNavigateToHome() },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
             shape = RoundedCornerShape(13.dp),
             modifier = Modifier
@@ -212,7 +214,7 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
 }
 
 @Composable
-private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit) {
+private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit, viewModel: OperationsViewModel) {
     var entregados by remember { mutableIntStateOf(0) }
     var devoluciones by remember { mutableIntStateOf(0) }
     val opIdDialog = remember { mutableStateOf(false) }
@@ -296,7 +298,9 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
             }
         }
         Button(
-            onClick = { onNavigateToHome() },
+            onClick = {
+                viewModel.thirdOperationInCourse.value = false
+                onNavigateToHome() },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
             shape = RoundedCornerShape(13.dp),
             modifier = Modifier
@@ -323,9 +327,16 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
 }
 
 @Composable
-fun ThirdScreen(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit) {
+fun ThirdScreen(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit, viewModel: OperationsViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf("Iniciar/Finalizar") }
+
+    selectedItem = if (viewModel.thirdOperationInCourse.value == true) {
+        "Finalizar ruta"
+    } else {
+        "Iniciar ruta"
+    }
+
 
     BackHandler {
         onNavigateToHome()
@@ -394,9 +405,9 @@ fun ThirdScreen(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit) {
                 }
 
                 when (selectedItem) {
-                    "Iniciar ruta" -> StartRoute(onNavigateToHome, onNavigateToPhoto)
-                    "Iniciar/Finalizar" -> StartRoute(onNavigateToHome, onNavigateToPhoto)
-                    "Finalizar ruta" -> EndRoute(onNavigateToHome, onNavigateToPhoto)
+                    "Iniciar ruta" -> StartRoute(onNavigateToHome, onNavigateToPhoto, viewModel)
+                    "Iniciar/Finalizar" -> StartRoute(onNavigateToHome, onNavigateToPhoto, viewModel)
+                    "Finalizar ruta" -> EndRoute(onNavigateToHome, onNavigateToPhoto, viewModel)
                     else -> Text(text = "Ocurrio un error. Reportalo a tu analizta")
                 }
             }

@@ -70,6 +70,12 @@ dependencies {
     // Dependencia de ML Kit para códigos de barras
     implementation(libs.mlkit.barcode.scanning)
 
+    // HTTP requests
+    implementation(libs.okhttp3) // Asegúrate de que `libs` esté configurado en tu archivo gradle.kts
+
+    // Parse to json
+    implementation(libs.gson)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

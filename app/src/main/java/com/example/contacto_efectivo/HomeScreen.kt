@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,125 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.contacto_efectivo.ui.theme.Contacto_efectivoTheme
-
-
-private fun identifyOperationOpt(operationDialog: MutableState<Boolean>, optMenu: MutableState<String>, option: String) {
-    operationDialog.value = true
-    optMenu.value = option
-}
-
-private fun validateOperationId(onNavigateToNextScreen: () -> Unit) {
-    onNavigateToNextScreen()
-}
-
-@Composable
-private fun AskOperationId(
-    operationDialog: MutableState<Boolean>,
-    onNavigateToNextScreen: () -> Unit,
-    onScanScreen: () -> Unit)
-{
-    val userInput = remember { mutableStateOf("") }
-
-    if (operationDialog.value) {
-        AlertDialog(
-            onDismissRequest = { operationDialog.value = false},
-            title = { Text(text = "ID de operacion") },
-            text = {
-                Column {
-                    Text("Presiona para escanea el ID")
-                    Button(
-                        onClick = { validateOperationId(onScanScreen) },
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .align(Alignment.CenterHorizontally)
-                    ) {
-                        Text(text = "Escanear")
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Escanear",
-                            tint = Color(0xFF213E85)
-                        )
-                    }
-                    Text("Introduce el ID")
-                    TextField(
-                        value = userInput.value,
-                        onValueChange = { newText -> userInput.value = newText },
-                        label = { Text("ID") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }},
-            confirmButton = {
-                Button(onClick = { validateOperationId(onNavigateToNextScreen) }) {
-                    Text("Buscar")
-                }
-            },
-            dismissButton = {
-                Button(onClick = { operationDialog.value = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
-}
-
-@Composable
-private fun OperationsMenu(optMenu: MutableState<String>, opIdDialog: MutableState<Boolean>){
-    var expanded by remember { mutableStateOf(false) }
-
-    Button(
-        onClick = { expanded = !expanded },
-        shape = RoundedCornerShape(13.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        modifier = Modifier
-            .fillMaxHeight()
-            .wrapContentSize(unbounded = true)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Menu,
-            contentDescription = "Entrega a domicilio",
-            tint = Color(0xFF213E85)
-        )
-        Text(
-            text = stringResource(id = R.string.menu_opt),
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
-            color = Color(0xFF213E85)
-        )
-    }
-    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        DropdownMenuItem(
-            text = {
-                Text(text = stringResource(id = R.string.opt_terceros))
-            },
-            onClick = { identifyOperationOpt(
-                operationDialog = opIdDialog,
-                optMenu = optMenu,
-                option = "third_screen"
-            ) }
-        )
-        DropdownMenuItem(
-            text = {
-                Text(text = stringResource(id = R.string.opt_prod))
-            },
-            onClick = { identifyOperationOpt(
-                operationDialog = opIdDialog,
-                optMenu = optMenu,
-                option = "update_screen"
-            ) }
-        )
-        DropdownMenuItem(
-            text = {
-                Text(text = stringResource(id = R.string.opt_clt))
-            },
-            onClick = { identifyOperationOpt(
-                operationDialog = opIdDialog,
-                optMenu = optMenu,
-                option = "update_screen"
-            ) }
-        )
-    }
-}
+import com.google.gson.Gson
 
 @Composable
 fun HomeScreen(navController: NavController, deliveryMan: String) {
@@ -202,7 +85,7 @@ fun HomeScreen(navController: NavController, deliveryMan: String) {
                         .weight(1f)
                         .fillMaxHeight()
                 ) {
-                    OperationsMenu(optMenu, opIdDialog)
+                    OperationsMenu(navController)
                 }
 
                 Button(
@@ -227,11 +110,7 @@ fun HomeScreen(navController: NavController, deliveryMan: String) {
                     )
                 }
                 Button(
-                    onClick = { identifyOperationOpt(
-                        operationDialog = opIdDialog,
-                        optMenu = optMenu,
-                        option = "consult_screen"
-                    ) },
+                    onClick = { navController.navigate("consult_screen") },
                     shape = RoundedCornerShape(13.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     modifier = Modifier
@@ -274,11 +153,52 @@ fun HomeScreen(navController: NavController, deliveryMan: String) {
         )
     }
 
-    if (opIdDialog.value) {
-        AskOperationId(
-            operationDialog = opIdDialog,
-            onNavigateToNextScreen = {navController.navigate(optMenu.value)},
-            onScanScreen = {navController.navigate("scan_screen")})
+
+}
+
+@Composable
+fun OperationsMenu(navController: NavController){
+    var expanded by remember { mutableStateOf(false) }
+
+    Button(
+        onClick = { expanded = !expanded },
+        shape = RoundedCornerShape(13.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+        modifier = Modifier
+            .fillMaxHeight()
+            .wrapContentSize(unbounded = true)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Menu,
+            contentDescription = "Entrega a domicilio",
+            tint = Color(0xFF213E85)
+        )
+        Text(
+            text = stringResource(id = R.string.menu_opt),
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+            color = Color(0xFF213E85)
+        )
+    }
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenuItem(
+            text = {
+                Text(text = stringResource(id = R.string.opt_terceros))
+            },
+            onClick = { navController.navigate("third_screen") }
+        )
+        DropdownMenuItem(
+            text = {
+                Text(text = stringResource(id = R.string.opt_prod))
+            },
+            onClick = { navController.navigate("update_screen") }
+        )
+        DropdownMenuItem(
+            text = {
+                Text(text = stringResource(id = R.string.opt_clt))
+            },
+            onClick = { navController.navigate("update_screen") }
+        )
     }
 }
 

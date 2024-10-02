@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -75,6 +75,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp() {
     val navController = rememberNavController()
+    val viewModel: OperationsViewModel = viewModel()
 
     NavHost(navController = navController, startDestination = "login")
     {
@@ -87,25 +88,30 @@ fun MyApp() {
             HomeScreen(navController, "Giovanni Arellano")
         }
         composable("consult_screen") {
-            ConsultScreen(onNavigateToHome = {
-                navController.navigate("home_screen")
-            })
+            ConsultScreen(navController, viewModel)
         }
         composable("third_screen") {
             ThirdScreen(
                 onNavigateToHome = { navController.navigate("home_screen") },
-                onNavigateToPhoto = { navController.navigate("photo_screen")}
+                onNavigateToPhoto = { navController.navigate("photo_screen")},
+                viewModel = viewModel
             )
         }
         composable("update_screen") {
-            UpdateScreen(onNavigateToHome = {
-                navController.navigate("home_screen")
-            })
+            UpdateScreen(navController, viewModel)
         }
         composable("scan_screen") {
-            BarcodeScannerScreen(onNavigateToHome = {
-                navController.navigate("home_screen")
-            })
+            var userInput = remember { mutableStateOf("") }
+            BarcodeScannerScreen(
+                onCodeScanned = { scannedCode ->
+                    userInput.value = scannedCode // Asignar el código escaneado
+                    navController.popBackStack()
+                },
+                onNavigateBack = {
+                    navController.navigate("consult_screen") // Regresar a la pantalla anterior sin código
+                },
+                viewModel = viewModel
+            )
         }
         composable("photo_screen") {
             CameraCaptureScreen(navController)

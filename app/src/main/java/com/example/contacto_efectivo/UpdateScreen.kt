@@ -24,6 +24,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,16 +38,42 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.gson.Gson
 
 @Composable
-fun UpdateScreen(onNavigateToHome: () -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    var comments by remember { mutableStateOf("") }
-    var selectedItem by remember { mutableStateOf("Estatus") }
+fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
 
     BackHandler {
-        onNavigateToHome()
+        navController.navigate("home_screen")
     }
+
+    var expanded by remember { mutableStateOf(false) }
+    var comments by remember { mutableStateOf("") }
+    var selectedItem by remember { mutableStateOf("") }
+    val opIdDialog = remember { mutableStateOf(true) }
+    val success = remember { mutableStateOf(false) }
+    val operationData = remember { mutableStateOf<String?>(null) }
+    var possibleStatus = remember { mutableStateOf<String?>(null) }
+
+    if (opIdDialog.value) {
+        AskOperationId(
+            operationDialog = opIdDialog,
+            success = success,
+            data = operationData,
+            onScanScreen = {navController.navigate("scan_screen")},
+            navController = navController,
+            viewModel = viewModel
+        )
+    }
+
+    val parsedData = operationData.value?.let { parseJsonToOperacion(it) }
+    if (parsedData != null) {
+        selectedItem = parsedData.status
+    } else {
+        // Manejar el caso en el que parsedData es nulo, por ejemplo, asignar un valor predeterminado a selectedItem
+        selectedItem = "Sin estado"  // o el valor que sea adecuado para tu lógica
+    }
+    //GetPossibleStatus(possibleStatus = possibleStatus, viewModel = viewModel)
 
     Column(
         modifier = Modifier
@@ -177,7 +205,7 @@ fun UpdateScreen(onNavigateToHome: () -> Unit) {
                     .fillMaxWidth()
             ) {
                 Button(
-                    onClick = { onNavigateToHome() },
+                    onClick = { navController.navigate("home_screen") },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     shape = RoundedCornerShape(13.dp),
                     border = BorderStroke(1.dp, Color(0xFFE8D67E)),
@@ -194,7 +222,7 @@ fun UpdateScreen(onNavigateToHome: () -> Unit) {
                     )
                 }
                 Button(
-                    onClick = { onNavigateToHome() },
+                    onClick = { navController.navigate("home_screen") },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
                     shape = RoundedCornerShape(13.dp),
                     modifier = Modifier
@@ -213,4 +241,23 @@ fun UpdateScreen(onNavigateToHome: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun GetPossibleStatus(possibleStatus: MutableState<String?>, viewModel: OperationsViewModel) {
+    if (viewModel.statusFlowTable.value == null) {
+        val httpRequests = HttpRequests()
+
+        LaunchedEffect(Unit) {
+            val apiResponse = httpRequests.getFlow("flujo_operacion/")
+            apiResponse?.let {
+                // Convierte el objeto a JSON para la navegación
+                viewModel.statusFlowTable.value = Gson().toJson(it)
+            }
+        }
+    }
+
+    val parsedData = viewModel.statusFlowTable.value?.let { parseJsonToFlow(it) }
+
+
 }
