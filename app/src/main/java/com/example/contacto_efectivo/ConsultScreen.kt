@@ -40,6 +40,7 @@ fun ConsultScreen(navController: NavController, viewModel: OperationsViewModel) 
     val opIdDialog = remember { mutableStateOf(true) }
     val success = remember { mutableStateOf(false) }
     val data = remember { mutableStateOf<String?>(null) }
+    viewModel.onBackfromScanScreen.value = "consult_screen"
 
     if (opIdDialog.value) {
         AskOperationId(

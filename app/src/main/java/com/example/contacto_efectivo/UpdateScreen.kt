@@ -38,7 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.google.gson.Gson
 
 @Composable
 fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
@@ -47,13 +46,13 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
         navController.navigate("home_screen")
     }
 
-    var expanded by remember { mutableStateOf(false) }
-    var comments by remember { mutableStateOf("") }
-    var selectedItem by remember { mutableStateOf("") }
+    var operationStatus = remember { mutableStateOf("") }
     val opIdDialog = remember { mutableStateOf(true) }
     val success = remember { mutableStateOf(false) }
     val operationData = remember { mutableStateOf<String?>(null) }
-    var possibleStatus = remember { mutableStateOf<String?>(null) }
+    var canUpdateStatus = remember { mutableStateOf(false) }
+
+    viewModel.onBackfromScanScreen.value = "update_screen"
 
     if (opIdDialog.value) {
         AskOperationId(
@@ -68,12 +67,21 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
 
     val parsedData = operationData.value?.let { parseJsonToOperacion(it) }
     if (parsedData != null) {
-        selectedItem = parsedData.status
+        operationStatus.value = parsedData.status
     } else {
         // Manejar el caso en el que parsedData es nulo, por ejemplo, asignar un valor predeterminado a selectedItem
-        selectedItem = "Sin estado"  // o el valor que sea adecuado para tu lógica
+        operationStatus.value = "Sin estado"  // o el valor que sea adecuado para tu lógica
     }
-    //GetPossibleStatus(possibleStatus = possibleStatus, viewModel = viewModel)
+
+    if (operationStatus.value !in viewModel.noMoreActions && parsedData != null) {
+        canUpdateStatus.value = true
+        println("SE puede actualizar: ${operationStatus.value}")
+        println("Data: ${parsedData}")
+    }
+
+    LaunchedEffect(operationStatus.value) {
+        // Forzar la recomposición cuando cambia operationStatus
+    }
 
     Column(
         modifier = Modifier
@@ -87,177 +95,199 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
-            Text(
-                text = "Selecciona el nuevo estatus de la operacion",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF213E85)
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 7.dp, bottom = 7.dp)
-            ) {
-                Button(
-                    onClick = { expanded = !expanded },
-                    shape = RoundedCornerShape(13.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(
-                            BorderStroke(1.dp, Color(0xFFE8D67E)),
-                            shape = RoundedCornerShape(13.dp)
-                        )
-                ) {
-                    Text(
-                        text = selectedItem,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily(Font(R.font.inter_extrabold)),
-                        color = Color(0xFF213E85)
-                    )
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown, // Reemplaza con el icono adecuado
-                        contentDescription = "Entrega a domicilio",
-                        tint = Color(0xFF213E85)
-                    )
-                }
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(text = "En ruta")
-                        },
-                        onClick = {
-                            selectedItem = "En ruta"
-                            expanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(text = "Recoleccion")
-                        },
-                        onClick = {
-                            selectedItem = "Recoleccion"
-                            expanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(text = "Entregado")
-                        },
-                        onClick = {
-                            selectedItem = "Entregado"
-                            expanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(text = "Reprogramar")
-                        },
-                        onClick = {
-                            selectedItem = "Reprogramar"
-                            expanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(text = "Recolectado")
-                        },
-                        onClick = {
-                            selectedItem = "Recolectado"
-                            expanded = false
-                        }
-                    )
-                }
+            if (!canUpdateStatus.value) {
+                Text(
+                    text = "Lo siento, no puedes actualizar el estatus de esta operacion. Comunicate con tu analista.",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF213E85)
+                )
+            } else {
+                Options(
+                    navController = navController,
+                    viewModel = viewModel,
+                    operationStatus = operationStatus,
+                    canUpdateStatus = canUpdateStatus,
+                    operationData = parsedData
+                )
             }
-            Text(
-                text = "Comentarios Adicionales",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF213E85),
-                modifier = Modifier
-                    .padding(top = 26.dp)
-            )
-            TextField(
-                value = comments,
-                onValueChange = {newText -> comments = newText},
-                label = {
-                    Text(
-                        text = "Escribe aqui cualquier incidencia",
-                        color = Color(0xFF888888),
-                        fontSize = 14.sp
-                    )
-                },
-                maxLines = Int.MAX_VALUE,
-                colors = TextFieldDefaults.colors(
-                    unfocusedIndicatorColor = Color.Transparent,
-                    unfocusedContainerColor = Color(0xFFe1e6ed)
-                ),
-                shape = RoundedCornerShape(13.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(170.dp)
-                    .padding(top = 7.dp, bottom = 7.dp)
-            )
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .padding(top = 23.dp, start = 28.dp, end = 28.dp)
-                    .fillMaxWidth()
-            ) {
-                Button(
-                    onClick = { navController.navigate("home_screen") },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    shape = RoundedCornerShape(13.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE8D67E)),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                        .padding(end = 8.dp)
-                ) {
-                    Text(
-                        text = "Mover",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFE8D67E),
-                    )
-                }
-                Button(
-                    onClick = { navController.navigate("home_screen") },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
-                    shape = RoundedCornerShape(13.dp),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                        .padding(start = 8.dp)
-                ) {
-                    Text(
-                        text = "Cancelar",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
 
-            }
         }
     }
 }
 
 @Composable
-private fun GetPossibleStatus(possibleStatus: MutableState<String?>, viewModel: OperationsViewModel) {
-    if (viewModel.statusFlowTable.value == null) {
-        val httpRequests = HttpRequests()
+fun Options(
+    navController: NavController,
+    viewModel: OperationsViewModel,
+    operationStatus: MutableState<String>,
+    canUpdateStatus: MutableState<Boolean>,
+    operationData: OperationApiResponse?
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var comments by remember { mutableStateOf("") }
+    var nextOptions by remember { mutableStateOf(listOf("")) }
+    var nextStatus = remember { mutableStateOf("") }
 
-        LaunchedEffect(Unit) {
-            val apiResponse = httpRequests.getFlow("flujo_operacion/")
-            apiResponse?.let {
-                // Convierte el objeto a JSON para la navegación
-                viewModel.statusFlowTable.value = Gson().toJson(it)
+    if (nextStatus.value == "" && operationStatus.value != "Sin estado") {
+        nextStatus.value = operationStatus.value
+    }
+
+    // Actualiza el valor de las opciones basado en el estado de operationStatus
+    when (operationStatus.value) {
+        "agendada" -> nextOptions = viewModel.agendada
+        "en ruta" -> nextOptions = viewModel.enRuta
+        "efectiva" -> nextOptions = viewModel.efectiva
+        "transferencia" -> nextOptions = viewModel.transferecia
+        else -> {
+            canUpdateStatus.value = false
+            nextOptions = viewModel.noMoreActions
+        }
+    }
+
+    Text(
+        text = "Selecciona el nuevo estatus de la operacion",
+        fontSize = 17.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = Color(0xFF213E85)
+    )
+
+    // Aquí está el componente Box que contiene el botón y el menú desplegable
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 7.dp, bottom = 7.dp)
+    ) {
+        Button(
+            onClick = { expanded = !expanded },
+            shape = RoundedCornerShape(13.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    BorderStroke(1.dp, Color(0xFFE8D67E)),
+                    shape = RoundedCornerShape(13.dp)
+                )
+        ) {
+            // Usamos una clave de recomposición para forzar que el texto se actualice
+            Text(
+                text = nextStatus.value,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+                color = Color(0xFF213E85)
+            )
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,  // Reemplaza con el ícono adecuado
+                contentDescription = "Entrega a domicilio",
+                tint = Color(0xFF213E85)
+            )
+        }
+
+        // Dropdown menu con las opciones
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            nextOptions.forEach { estatus ->
+                DropdownMenuItem(
+                    text = { Text(text = estatus) },
+                    onClick = {
+                        nextStatus.value = estatus  // Aquí actualizamos el estado
+                        expanded = false
+                    }
+                )
             }
         }
     }
 
-    val parsedData = viewModel.statusFlowTable.value?.let { parseJsonToFlow(it) }
+    // Verifica si operationStatus.value está en la lista de estados que necesitan evidencia
+    if (nextStatus.value in viewModel.necesitaEvidencia) {
+        Text(
+            text = "Comentarios Adicionales",
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF213E85),
+            modifier = Modifier
+                .padding(top = 26.dp)
+        )
+        TextField(
+            value = comments,
+            onValueChange = { newText ->
+                comments = newText
+                if (operationData != null) {
+                    operationData.comentario = newText
+                }},
+            label = {
+                Text(
+                    text = "Escribe aqui cualquier incidencia",
+                    color = Color(0xFF888888),
+                    fontSize = 14.sp
+                )
+            },
+            maxLines = Int.MAX_VALUE,
+            colors = TextFieldDefaults.colors(
+                unfocusedIndicatorColor = Color.Transparent,
+                unfocusedContainerColor = Color(0xFFe1e6ed)
+            ),
+            shape = RoundedCornerShape(13.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(170.dp)
+                .padding(top = 7.dp, bottom = 7.dp)
+        )
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .padding(top = 23.dp, start = 28.dp, end = 28.dp)
+            .fillMaxWidth()
+    ) {
+        Button(
+            onClick = {
+                if (operationData != null) {
+                    operationData.status = nextStatus.value
+                    var codigo= operationData.codigo.toString()
+                    sendUpdate(navController, operationData, codigo)
+                } else {
+                    //
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            shape = RoundedCornerShape(13.dp),
+            border = BorderStroke(1.dp, Color(0xFFE8D67E)),
+            modifier = Modifier
+                .weight(1f)
+                .height(48.dp)
+                .padding(end = 8.dp)
+        ) {
+            Text(
+                text = "Mover",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFE8D67E)
+            )
+        }
+        Button(
+            onClick = { navController.navigate("home_screen") },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
+            shape = RoundedCornerShape(13.dp),
+            modifier = Modifier
+                .weight(1f)
+                .height(48.dp)
+                .padding(start = 8.dp)
+        ) {
+            Text(
+                text = "Cancelar",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+    }
+}
 
 
+private fun sendUpdate(navController: NavController, operationData: OperationApiResponse?, codigo: String) {
+    if (operationData != null) {
+        updateOperationStatus(codigo, operationData)
+    }
+    navController.navigate("home_screen")
 }

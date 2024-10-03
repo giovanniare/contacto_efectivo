@@ -108,7 +108,7 @@ fun MyApp() {
                     navController.popBackStack()
                 },
                 onNavigateBack = {
-                    navController.navigate("consult_screen") // Regresar a la pantalla anterior sin código
+                    navController.navigate(viewModel.onBackfromScanScreen.value) // Regresar a la pantalla anterior sin código
                 },
                 viewModel = viewModel
             )

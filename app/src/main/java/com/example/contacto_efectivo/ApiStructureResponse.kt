@@ -7,18 +7,22 @@ data class OperationApiResponse(
     val fecha_inicio: String,
     val id_tipo_operacion: String,
     val codigo: String?,
-    val status: String,
+    var status: String,
     val direccion_inicio: String,
     val direccion_final: String,
     val tarifa: String,
     val fecha_final: String,
     val cantidad: Int,
-    val comentario: String,
+    var comentario: String,
     val precio: String?,
     val nombre_referencia: String,
     val numero_referencia: String,
-    val repartidor: String?,
-    val historial: String?
+    val repartidor: Int?,
+    var historial: String?,
+    val peso: Int,
+    val largo: Int,
+    val ancho: Int,
+    val alto: Int
 )
 
 // Función para convertir el JSON a un objeto Operacion

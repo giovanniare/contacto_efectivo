@@ -7,5 +7,11 @@ class OperationsViewModel: ViewModel() {
     var operationId = mutableStateOf<String?>(null)
     var operationIdUrl = mutableStateOf<String?>(null)
     var thirdOperationInCourse = mutableStateOf<Boolean?>(null)
-    var statusFlowTable = mutableStateOf<String?>(null)
+    var onBackfromScanScreen = mutableStateOf<String>("home_screen")
+    val agendada = listOf("en ruta", "cancelada", "entregada")
+    val enRuta = listOf("efectiva", "transferencia", "reagendada", "cancelada")
+    val efectiva = listOf("reagendada", "cancelada")
+    val transferecia = listOf("reagendada", "cancelada", "entregada")
+    val noMoreActions = listOf("entregada", "cancelada", "finalizada", "reagendada", "creada")
+    val necesitaEvidencia = listOf("entregada", "cancelada", "reagendada")
 }

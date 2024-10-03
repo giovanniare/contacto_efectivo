@@ -72,6 +72,9 @@ dependencies {
 
     // HTTP requests
     implementation(libs.okhttp3) // Asegúrate de que `libs` esté configurado en tu archivo gradle.kts
+    implementation(libs.retrofit2)
+    implementation(libs.convertergson)
+    implementation(libs.logininterceptor)
 
     // Parse to json
     implementation(libs.gson)

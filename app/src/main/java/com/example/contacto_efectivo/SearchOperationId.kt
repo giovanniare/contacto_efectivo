@@ -94,7 +94,7 @@ fun AskOperationId(
         // Usar LaunchedEffect fuera del AlertDialog
         if (loading) {
             LaunchedEffect(Unit) {
-                val apiResponse = httpRequests.getOperation("operacion/${userInput.value}/")
+                val apiResponse = httpRequests.getOperation("operacion/${userInput.value}/codigo/")
                 loading = false
                 apiResponse?.let {
                     // Convierte el objeto a JSON para la navegación
@@ -113,7 +113,7 @@ fun AskOperationId(
             println("Este es el valor escaneado - viewModel: ${viewModel.operationId.value}")
 
             LaunchedEffect(Unit) {
-                val apiResponse = httpRequests.getOperation("operacion/${userInput.value}/")
+                val apiResponse = httpRequests.getOperation("operacion/${userInput.value}/codigo/")
                 apiResponse?.let {
                     // Convierte el objeto a JSON para la navegación
                     data.value = Gson().toJson(it)
