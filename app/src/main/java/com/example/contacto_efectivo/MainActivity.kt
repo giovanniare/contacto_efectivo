@@ -85,7 +85,7 @@ fun MyApp() {
             })
         }
         composable("home_screen") {
-            HomeScreen(navController, "Giovanni Arellano")
+            HomeScreen(navController, "Beta User", viewModel)
             viewModel.keepData.value = false
             viewModel.operationScaneed = null
             viewModel.nextStatus.value = null

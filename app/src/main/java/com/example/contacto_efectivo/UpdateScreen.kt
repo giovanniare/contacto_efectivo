@@ -108,7 +108,7 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
             if (parsedData != null) {
                 if (parsedData.id_tipo_operacion == "terceros") {
                     Text(
-                        text = "No puedes actualizar esta operacion desde este menu. Selecciona tercerons en el menu de operaciones para continuar.",
+                        text = "No puedes actualizar esta operacion desde este menu. Selecciona terceros en el menu de operaciones para continuar.",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF213E85)
@@ -120,7 +120,14 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF213E85)
                     )
-                } else {
+                } else if(viewModel.repartidorId != parsedData.repartidor) {
+                    Text(
+                        text = "Esta operacion esta asignada a otro repartidor. Comunicate con tu analizta.",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF213E85)
+                    )
+                }else {
                     Options(
                         navController = navController,
                         viewModel = viewModel,

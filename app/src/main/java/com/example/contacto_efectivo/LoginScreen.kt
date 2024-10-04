@@ -156,8 +156,6 @@ fun LogInScreen(onNavigateToHome: () -> Unit) {
 
 
 private fun accesoPermitido(context: Context, user: String, password: String, navToHome: () -> Unit) {
-
-
     if (user == "Beta" && password == "ContactoEfectivo") {
         // Lógica para subir la imagen seleccionada
         navToHome()

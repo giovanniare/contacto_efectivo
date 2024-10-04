@@ -394,7 +394,9 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF213E85)
                         )
-                    } else {
+                    } else if(viewModel.repartidorId != parsedData.repartidor) {
+                        selectedItem = "No repartidor match"
+                    }else {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -460,6 +462,12 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                     }, viewModel)
                     "No permitido" -> Text(
                         text = "No puedes actualizar el estatus de esta operacion",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF213E85)
+                    )
+                    "No repartidor match" -> Text(
+                        text = "Esta operacion esta asignada a otro repartidor. Comunicate con tu analizta.",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF213E85)
