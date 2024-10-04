@@ -8,6 +8,10 @@ class OperationsViewModel: ViewModel() {
     var operationIdUrl = mutableStateOf<String?>(null)
     var thirdOperationInCourse = mutableStateOf<Boolean?>(null)
     var onBackfromScanScreen = mutableStateOf<String>("home_screen")
+    var keepData = mutableStateOf(false)
+    var operationScaneed:OperationApiResponse? = null
+    var nextStatus = mutableStateOf<String?>(null)
+
     val agendada = listOf("en ruta", "cancelada", "entregada")
     val enRuta = listOf("efectiva", "transferencia", "reagendada", "cancelada")
     val efectiva = listOf("reagendada", "cancelada")

@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -48,82 +49,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.activity.compose.rememberLauncherForActivityResult as rememberLauncherForActivityResult1
-
-@Composable
-fun TomarEvidencia(
-    operationDialog: MutableState<Boolean>,
-    onNavigateToGallery: () -> Unit,
-    onPhotoScreen: () -> Unit)
-{
-
-    if (operationDialog.value) {
-        val context = LocalContext.current
-        val launcher = rememberLauncherForActivityResult1(
-            contract = ActivityResultContracts.GetContent()
-        ) { uri: Uri? ->
-            uri?.let {
-                val imagePath = getRealPathFromURI(context, it)
-                uploadImage(context, imagePath) // Sube la imagen seleccionada
-                operationDialog.value = false
-            } ?: run {
-                Toast.makeText(
-                    context,
-                    "Error al seleccionar la imagen",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-        AlertDialog(
-            onDismissRequest = { operationDialog.value = false},
-            title = { Text(text = "Adjunta evidencia") },
-            text = {
-                Column {
-                    Text("Toma una foto o subela desde tu galeria")
-                    Button(
-                        onClick = {
-                            launcher.launch("image/*")
-                        },
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .align(Alignment.CenterHorizontally)
-                    ) {
-                        Text(text = "Galeria")
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Cargar",
-                            tint = Color(0xFF213E85)
-                        )
-                    }
-                    Button(
-                        onClick = { onPhotoScreen() },
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .align(Alignment.CenterHorizontally)
-                    ) {
-                        Text(text = "Camara")
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Foto",
-                            tint = Color(0xFF213E85)
-                        )
-                    }
-                }},
-            confirmButton = {
-                Button(onClick = {  }) {
-                    Text("Buscar")
-                }
-            },
-            dismissButton = {
-                Button(onClick = { operationDialog.value = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
-}
 
 @SuppressLint("ResourceAsColor")
 @Composable
@@ -148,12 +76,17 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
             )
             TextField(
                 value = count.toString(),
-                onValueChange = { count = it.toIntOrNull() ?: 0 },
+                onValueChange = {newValue ->  count = newValue.toIntOrNull() ?: 0 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(13.dp),
+                placeholder = { Text(
+                    text = count.toString(),
+                    color = colorResource(id = R.color.gray_ratiio),
+                    fontSize = 14.sp)
+                },
                 colors = TextFieldDefaults.colors(
-                    unfocusedIndicatorColor = Color.Transparent,
-                    unfocusedContainerColor = Color(0xFFe1e6ed)
+                    unfocusedContainerColor = Color(0xFFe1e6ed),
+                    unfocusedTextColor = colorResource(id = R.color.blue_btn)
                 ),
                 modifier = Modifier
                     .weight(1f)
@@ -184,31 +117,47 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
                 )
             }
         }
-        Button(
-            onClick = {
-                viewModel.thirdOperationInCourse.value = true
-                onNavigateToHome() },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
-            shape = RoundedCornerShape(13.dp),
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .height(65.dp)
-                .padding(top = 16.dp)
-        ) {
+        if (count > 0) {
+            Button(
+                onClick = {
+                    viewModel.thirdOperationInCourse.value = true
+                    sendUpdate(viewModel, recibidos = count)
+                    onNavigateToHome() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
+                shape = RoundedCornerShape(13.dp),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .height(65.dp)
+                    .padding(top = 16.dp)
+            ) {
+                Text(
+                    text = "Iniciar Ruta",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        } else {
             Text(
-                text = "Iniciar Ruta",
-                fontSize = 18.sp,
+                text = "Llena el campo de recibidos para poder actualiazar el estatus.",
+                fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = colorResource(R.color.blue_btn),
+                modifier = Modifier
+                    .weight(2f)
+                    .align(Alignment.CenterHorizontally)
             )
         }
+
     }
 
     if (opIdDialog.value) {
         TomarEvidencia(
             operationDialog = opIdDialog,
             onNavigateToGallery = { /* Aquí va la lógica al presionar el botón */ },
-            onPhotoScreen = { onNavigateToPhoto() }
+            onPhotoScreen = {
+                viewModel.keepData.value = true
+                onNavigateToPhoto() }
         )
     }
 }
@@ -236,12 +185,17 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
             )
             TextField(
                 value = entregados.toString(),
-                onValueChange = { entregados = it.toIntOrNull() ?: 0 },
+                onValueChange = { newValue -> entregados = newValue.toIntOrNull() ?: 0 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(13.dp),
+                placeholder = { Text(
+                    text = entregados.toString(),
+                    color = colorResource(id = R.color.gray_ratiio),
+                    fontSize = 14.sp)
+                },
                 colors = TextFieldDefaults.colors(
-                    unfocusedIndicatorColor = Color.Transparent,
-                    unfocusedContainerColor = Color(0xFFe1e6ed)
+                    unfocusedContainerColor = Color(0xFFe1e6ed),
+                    unfocusedTextColor = colorResource(id = R.color.blue_btn)
                 ),
                 modifier = Modifier
                     .weight(1f)
@@ -261,12 +215,17 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
             )
             TextField(
                 value = devoluciones.toString(),
-                onValueChange = { devoluciones = it.toIntOrNull() ?: 0 },
+                onValueChange = { newValue -> devoluciones = newValue.toIntOrNull() ?: 0 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(13.dp),
+                placeholder = { Text(
+                    text = devoluciones.toString(),
+                    color = colorResource(id = R.color.gray_ratiio),
+                    fontSize = 14.sp)
+                },
                 colors = TextFieldDefaults.colors(
-                    unfocusedIndicatorColor = Color.Transparent,
-                    unfocusedContainerColor = Color(0xFFe1e6ed)
+                    unfocusedContainerColor = Color(0xFFe1e6ed),
+                    unfocusedTextColor = colorResource(id = R.color.blue_btn)
                 ),
                 modifier = Modifier
                     .weight(1f)
@@ -297,37 +256,55 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
                 )
             }
         }
-        Button(
-            onClick = {
-                viewModel.thirdOperationInCourse.value = false
-                onNavigateToHome() },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
-            shape = RoundedCornerShape(13.dp),
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .height(65.dp)
-                .padding(top = 16.dp)
-        ) {
+        if (entregados > 0 && devoluciones >= 0) {
+            Button(
+                onClick = {
+                    viewModel.thirdOperationInCourse.value = false
+                    sendUpdate(viewModel, end = true, entregados = entregados, devoluciones = devoluciones)
+                    entregados = 0
+                    devoluciones = 0
+                    onNavigateToHome() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
+                shape = RoundedCornerShape(13.dp),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .height(65.dp)
+                    .padding(top = 16.dp)
+            ) {
+                Text(
+                    text = "Finalizar Ruta",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        } else {
             Text(
-                text = "Finalizar Ruta",
-                fontSize = 18.sp,
+                text = "Llena los campos de entragas y devoluciones para poder actualiazar el estatus.",
+                fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = colorResource(R.color.blue_btn),
+                modifier = Modifier
+                    .weight(2f)
+                    .align(Alignment.CenterHorizontally)
             )
         }
+
     }
 
     if (opIdDialog.value) {
         TomarEvidencia(
             operationDialog = opIdDialog,
             onNavigateToGallery = { /* Aquí va la lógica al presionar el botón */ },
-            onPhotoScreen = { onNavigateToPhoto() }
+            onPhotoScreen = {
+                viewModel.keepData.value = true
+                onNavigateToPhoto() }
         )
     }
 }
 
 @Composable
-fun ThirdScreen(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit, viewModel: OperationsViewModel) {
+fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf("Iniciar/Finalizar") }
 
@@ -339,7 +316,52 @@ fun ThirdScreen(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit, vie
 
 
     BackHandler {
-        onNavigateToHome()
+        navController.navigate("home_screen")
+    }
+
+    var operationStatus = remember { mutableStateOf("") }
+    val opIdDialog = remember { mutableStateOf(true) }
+    val success = remember { mutableStateOf(false) }
+    val operationData = remember { mutableStateOf<String?>(null) }
+    var canUpdateStatus = remember { mutableStateOf(false) }
+
+    viewModel.onBackfromScanScreen.value = "third_screen"
+
+    if (viewModel.keepData.value) {
+        opIdDialog.value = false
+    }
+
+    if (opIdDialog.value && !viewModel.keepData.value) {
+        AskOperationId(
+            operationDialog = opIdDialog,
+            success = success,
+            data = operationData,
+            onScanScreen = {navController.navigate("scan_screen")},
+            navController = navController,
+            viewModel = viewModel
+        )
+    }
+
+    var parsedData = operationData.value?.let { parseJsonToOperacion(it) }
+    if (parsedData != null) {
+        operationStatus.value = parsedData.status
+        viewModel.operationScaneed = parsedData
+    } else if (viewModel.keepData.value && viewModel.operationScaneed != null) {
+        parsedData = viewModel.operationScaneed
+        operationStatus.value = parsedData?.status ?: "Sin estado"
+    } else {
+        // Manejar el caso en el que parsedData es nulo, por ejemplo, asignar un valor predeterminado a selectedItem
+        operationStatus.value = "Sin estado"  // o el valor que sea adecuado para tu lógica
+    }
+
+    if (operationStatus.value !in viewModel.noMoreActions && parsedData != null) {
+        canUpdateStatus.value = true
+        println("SE puede actualizar: ${operationStatus.value}")
+        println("Data: ${parsedData}")
+    }
+
+    LaunchedEffect(operationStatus.value) {
+        // Forzar la recomposición cuando cambia operationStatus
     }
 
     Column(
@@ -355,62 +377,124 @@ fun ThirdScreen(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit, vie
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 7.dp, end = 7.dp)
-                ) {
-                    Button(
-                        onClick = { expanded = !expanded },
-                        shape = RoundedCornerShape(13.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(
-                                BorderStroke(1.dp, Color(0xFFE8D67E)),
-                                shape = RoundedCornerShape(13.dp)
-                            )
-                    ) {
+                if (parsedData != null) {
+                    if (parsedData.id_tipo_operacion != "terceros") {
+                        selectedItem = "No permitido"
                         Text(
-                            text = selectedItem,
-                            fontWeight = FontWeight.Bold,
+                            text = "No puedes actualizar esta operacion desde este menu. Selecciona ${parsedData.id_tipo_operacion} en el menu de operaciones para continuar.",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF213E85)
                         )
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown, // Reemplaza con el icono adecuado
-                            contentDescription = "Entrega a domicilio",
-                            tint = Color(0xFF213E85)
+                    } else if (!canUpdateStatus.value) {
+                        selectedItem = "No permitido"
+                        Text(
+                            text = "Lo siento, no puedes actualizar el estatus de esta operacion. Comunicate con tu analista.",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF213E85)
                         )
-                    }
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = "Iniciar ruta")
-                            },
-                            onClick = {
-                                selectedItem = "Iniciar ruta"
-                                expanded = false
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 7.dp, end = 7.dp)
+                        ) {
+                            Button(
+                                onClick = { expanded = !expanded },
+                                shape = RoundedCornerShape(13.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(
+                                        BorderStroke(1.dp, Color(0xFFE8D67E)),
+                                        shape = RoundedCornerShape(13.dp)
+                                    )
+                            ) {
+                                Text(
+                                    text = selectedItem,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF213E85)
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown, // Reemplaza con el icono adecuado
+                                    contentDescription = "Entrega a domicilio",
+                                    tint = Color(0xFF213E85)
+                                )
                             }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = "Finalizar ruta")
-                            },
-                            onClick = {
-                                selectedItem = "Finalizar ruta"
-                                expanded = false
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(text = "Iniciar ruta")
+                                    },
+                                    onClick = {
+                                        selectedItem = "Iniciar ruta"
+                                        expanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(text = "Finalizar ruta")
+                                    },
+                                    onClick = {
+                                        selectedItem = "Finalizar ruta"
+                                        expanded = false
+                                    }
+                                )
                             }
-                        )
+                        }
                     }
                 }
-
                 when (selectedItem) {
-                    "Iniciar ruta" -> StartRoute(onNavigateToHome, onNavigateToPhoto, viewModel)
-                    "Iniciar/Finalizar" -> StartRoute(onNavigateToHome, onNavigateToPhoto, viewModel)
-                    "Finalizar ruta" -> EndRoute(onNavigateToHome, onNavigateToPhoto, viewModel)
-                    else -> Text(text = "Ocurrio un error. Reportalo a tu analizta")
+                    "Iniciar ruta" -> StartRoute({navController.navigate("home_screen")}, {
+                        if (parsedData != null) {
+                            viewModel.keepData.value = true
+                            navController.navigate("photo_screen")
+                        }
+                    }, viewModel)
+                    "Finalizar ruta" -> EndRoute({navController.navigate("home_screen")}, {
+                        if (parsedData != null) {
+                            viewModel.keepData.value = true
+                            navController.navigate("photo_screen")
+                        }
+                    }, viewModel)
+                    "No permitido" -> Text(
+                        text = "No puedes actualizar el estatus de esta operacion",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF213E85)
+                    )
+                    else -> {
+                        Text(
+                            text = "Ocurrio un error. Reportalo a tu analizta",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF213E85))
+                        viewModel.keepData.value = false
+                        viewModel.operationScaneed = null
+                    }
                 }
             }
         }
+    }
+}
+
+private fun sendUpdate(viewModel: OperationsViewModel, recibidos: Int = 0, entregados: Int = 0, devoluciones: Int = 0, end: Boolean = false, ) {
+    var opData = viewModel.operationScaneed
+    var codigo = opData?.codigo
+
+    if (opData != null && codigo != null) {
+        if (end) {
+            opData.entregas = entregados
+            opData.devoluciones = devoluciones
+            opData.status = "entregada"
+        } else {
+            opData.cantidad = recibidos
+            opData.status = "en ruta"
+        }
+
+        updateOperationStatus(codigo, opData)
+        viewModel.keepData.value = false
+        viewModel.operationScaneed = null
     }
 }

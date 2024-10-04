@@ -148,6 +148,16 @@ private fun ShowOperationDetails(operationData: MutableState<String?>) {
 
             )
             Text(
+                text = "Tipo: ${it.id_tipo_operacion}",
+                fontSize = 18.sp,
+                textAlign = TextAlign.Justify,
+                color = Color(0xFF213E85),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(start = 27.dp)
+
+            )
+            Text(
                 text = "Dirección de Inicio:",
                 fontSize = 18.sp,
                 textAlign = TextAlign.Justify,

@@ -86,14 +86,16 @@ fun MyApp() {
         }
         composable("home_screen") {
             HomeScreen(navController, "Giovanni Arellano")
+            viewModel.keepData.value = false
+            viewModel.operationScaneed = null
+            viewModel.nextStatus.value = null
         }
         composable("consult_screen") {
             ConsultScreen(navController, viewModel)
         }
         composable("third_screen") {
             ThirdScreen(
-                onNavigateToHome = { navController.navigate("home_screen") },
-                onNavigateToPhoto = { navController.navigate("photo_screen")},
+                navController = navController,
                 viewModel = viewModel
             )
         }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -30,8 +31,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +57,11 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
 
     viewModel.onBackfromScanScreen.value = "update_screen"
 
-    if (opIdDialog.value) {
+    if (viewModel.keepData.value) {
+        opIdDialog.value = false
+    }
+
+    if (opIdDialog.value && !viewModel.keepData.value) {
         AskOperationId(
             operationDialog = opIdDialog,
             success = success,
@@ -65,9 +72,12 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
         )
     }
 
-    val parsedData = operationData.value?.let { parseJsonToOperacion(it) }
+    var parsedData = operationData.value?.let { parseJsonToOperacion(it) }
     if (parsedData != null) {
         operationStatus.value = parsedData.status
+    } else if (viewModel.keepData.value && viewModel.operationScaneed != null) {
+        parsedData = viewModel.operationScaneed
+        operationStatus.value = parsedData?.status ?: "Sin estado"
     } else {
         // Manejar el caso en el que parsedData es nulo, por ejemplo, asignar un valor predeterminado a selectedItem
         operationStatus.value = "Sin estado"  // o el valor que sea adecuado para tu lógica
@@ -95,21 +105,30 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
-            if (!canUpdateStatus.value) {
-                Text(
-                    text = "Lo siento, no puedes actualizar el estatus de esta operacion. Comunicate con tu analista.",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF213E85)
-                )
-            } else {
-                Options(
-                    navController = navController,
-                    viewModel = viewModel,
-                    operationStatus = operationStatus,
-                    canUpdateStatus = canUpdateStatus,
-                    operationData = parsedData
-                )
+            if (parsedData != null) {
+                if (parsedData.id_tipo_operacion == "terceros") {
+                    Text(
+                        text = "No puedes actualizar esta operacion desde este menu. Selecciona tercerons en el menu de operaciones para continuar.",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF213E85)
+                    )
+                } else if (!canUpdateStatus.value) {
+                    Text(
+                        text = "Lo siento, no puedes actualizar el estatus de esta operacion. Comunicate con tu analista. Esta operacion ya fue marcada como entregada.",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF213E85)
+                    )
+                } else {
+                    Options(
+                        navController = navController,
+                        viewModel = viewModel,
+                        operationStatus = operationStatus,
+                        canUpdateStatus = canUpdateStatus,
+                        operationData = parsedData
+                    )
+                }
             }
 
         }
@@ -128,9 +147,14 @@ fun Options(
     var comments by remember { mutableStateOf("") }
     var nextOptions by remember { mutableStateOf(listOf("")) }
     var nextStatus = remember { mutableStateOf("") }
+    val opIdDialog = remember { mutableStateOf(false) }
 
     if (nextStatus.value == "" && operationStatus.value != "Sin estado") {
         nextStatus.value = operationStatus.value
+    }
+
+    if (viewModel.keepData.value) {
+        nextStatus.value = viewModel.nextStatus.value!!
     }
 
     // Actualiza el valor de las opciones basado en el estado de operationStatus
@@ -199,6 +223,29 @@ fun Options(
 
     // Verifica si operationStatus.value está en la lista de estados que necesitan evidencia
     if (nextStatus.value in viewModel.necesitaEvidencia) {
+        Row(modifier = Modifier.padding(bottom = 16.dp, top = 16.dp)){
+            Text(
+                text = "Adjunta evidencia",
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold,
+                color = colorResource(id = R.color.blue_btn),
+                modifier = Modifier
+                    .weight(2f)
+                    .align(Alignment.CenterVertically)
+            )
+            Button(
+                onClick = { opIdDialog.value = true },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.AddCircle,
+                    contentDescription = "Tomar foto",
+                    tint = Color(0xFF213E85)
+                )
+            }
+        }
         Text(
             text = "Comentarios Adicionales",
             fontSize = 17.sp,
@@ -232,6 +279,21 @@ fun Options(
                 .height(170.dp)
                 .padding(top = 7.dp, bottom = 7.dp)
         )
+
+        if (opIdDialog.value) {
+            TomarEvidencia(
+                operationDialog = opIdDialog,
+                onNavigateToGallery = { /* Aquí va la lógica al presionar el botón */ },
+                onPhotoScreen = {
+                    if (operationData != null) {
+                        viewModel.keepData.value = true
+                        viewModel.nextStatus.value = nextStatus.value
+                        viewModel.operationScaneed = operationData
+                        navController.navigate("photo_screen") }
+                    }
+            )
+        }
+
     }
 
     Row(
@@ -285,7 +347,11 @@ fun Options(
 }
 
 
-private fun sendUpdate(navController: NavController, operationData: OperationApiResponse?, codigo: String) {
+private fun sendUpdate(
+    navController: NavController,
+    operationData: OperationApiResponse?,
+    codigo: String
+) {
     if (operationData != null) {
         updateOperationStatus(codigo, operationData)
     }

@@ -2,6 +2,8 @@ package com.example.contacto_efectivo
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -38,6 +41,7 @@ import com.example.contacto_efectivo.ui.theme.Contacto_efectivoTheme
 
 @Composable
 fun LogInScreen(onNavigateToHome: () -> Unit) {
+    val context = LocalContext.current
     val image = painterResource(id = R.drawable.leon_png)
     var userName by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -127,7 +131,11 @@ fun LogInScreen(onNavigateToHome: () -> Unit) {
             )
             Button(
                 onClick = {
-                    onNavigateToHome()
+                    accesoPermitido(
+                        context = context,
+                        user = userName,
+                        password = password,
+                        navToHome = {onNavigateToHome()})
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.gold_theme)),
                 shape = RoundedCornerShape(13.dp),
@@ -143,6 +151,18 @@ fun LogInScreen(onNavigateToHome: () -> Unit) {
             }
         }
 
+    }
+}
+
+
+private fun accesoPermitido(context: Context, user: String, password: String, navToHome: () -> Unit) {
+
+
+    if (user == "Beta" && password == "ContactoEfectivo") {
+        // Lógica para subir la imagen seleccionada
+        navToHome()
+    } else {
+        Toast.makeText(context, "No tienes acceso al app", Toast.LENGTH_SHORT).show()
     }
 }
 

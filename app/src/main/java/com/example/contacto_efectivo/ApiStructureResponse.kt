@@ -12,7 +12,7 @@ data class OperationApiResponse(
     val direccion_final: String,
     val tarifa: String,
     val fecha_final: String,
-    val cantidad: Int,
+    var cantidad: Int,
     var comentario: String,
     val precio: String?,
     val nombre_referencia: String,
@@ -22,7 +22,9 @@ data class OperationApiResponse(
     val peso: Int,
     val largo: Int,
     val ancho: Int,
-    val alto: Int
+    val alto: Int,
+    var entregas: Int,
+    var devoluciones: Int
 )
 
 // Función para convertir el JSON a un objeto Operacion
