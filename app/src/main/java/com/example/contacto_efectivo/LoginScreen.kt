@@ -1,7 +1,5 @@
 package com.example.contacto_efectivo
 
-import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -21,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,10 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.contacto_efectivo.ui.theme.Contacto_efectivoTheme
-import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,12 +46,12 @@ import kotlinx.coroutines.withContext
 fun LogInScreen(onNavigateToHome: () -> Unit, viewModel: OperationsViewModel) {
     val context = LocalContext.current
     val image = painterResource(id = R.drawable.leon_png)
-    var userName by remember { mutableStateOf(0) }
+    var userName by remember { mutableStateOf<Int?>(null) }
     var password by remember { mutableStateOf("") }
     var userLabel = ""
     var passLabel = ""
 
-    userLabel = if (userName == 0) {
+    userLabel = if (userName == null) {
         "Ingresa tu numero de usuario"
     } else {
         userName.toString()
@@ -165,7 +159,7 @@ fun LogInScreen(onNavigateToHome: () -> Unit, viewModel: OperationsViewModel) {
 }
 
 
-private fun accesoPermitido(context: Context, user: Int, password: String, viewModel: OperationsViewModel, navToHome: () -> Unit) {
+private fun accesoPermitido(context: Context, user: Int?, password: String, viewModel: OperationsViewModel, navToHome: () -> Unit) {
     val httpRequests = HttpRequests()
 
     // Ejecutamos en una corutina, fuera del entorno Composable
