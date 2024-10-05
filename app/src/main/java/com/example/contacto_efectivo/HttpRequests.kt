@@ -66,4 +66,33 @@ class HttpRequests {
             }
         }
     }
+
+    suspend fun getUser(endPointStr: String): User? {
+        println("Esta es la url que se manda: $urlApiBase_$endPointStr")
+        return withContext(Dispatchers.IO) {
+            val request = Request.Builder()
+                .url("$urlApiBase_$endPointStr")
+                .build()
+
+            try {
+                val response: Response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    responseBody?.let {
+                        // Parsear el JSON a ApiResponse
+                        gson.fromJson(it, User::class.java)
+                    }
+                } else {
+                    println("Error: ${response.code}")
+                    null
+                }
+            } catch (e: Exception) {
+                println("Exception: ${e.message}")
+                println("Exception: ${e.localizedMessage}")
+                println("Exception: ${e.stackTrace}")
+                println("Exception: ${e.toString()}")
+                null
+            }
+        }
+    }
 }

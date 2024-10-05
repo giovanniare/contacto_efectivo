@@ -36,21 +36,21 @@ fun parseJsonToOperacion(jsonString: String): OperationApiResponse? {
         null
     }
 }
-
-data class FlowApiResponse(
-    val creada: String,
-    val agendada: String,
-    val en_ruta: String,
-    val efectiva: String,
-    val transferencia: String,
-    val cancelada: String,
-    val entregada: String,
-    val finalizada: String,
+data class User(
+    val id: Int,
+    val id_tipo: Int,
+    val nombre: String,
+    val sueldo: String,
+    val posicion: String,
+    val fecha_inicio: String,
+    val fecha_final: String,
+    val usuario_nombre: String,
+    val usuario_password: String
 )
 
-fun parseJsonToFlow(jsonString: String): FlowApiResponse? {
+fun parseJsonToUser(jsonString: String): User? {
     return try {
-        Gson().fromJson(jsonString, FlowApiResponse::class.java)
+        Gson().fromJson(jsonString, User::class.java)
     } catch (e: Exception) {
         println("Error al parsear JSON: ${e.message}")
         null

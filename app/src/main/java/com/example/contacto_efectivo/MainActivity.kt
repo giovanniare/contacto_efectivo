@@ -80,9 +80,7 @@ fun MyApp() {
     NavHost(navController = navController, startDestination = "login")
     {
         composable("login") {
-            LogInScreen(onNavigateToHome = {
-                navController.navigate("home_screen")
-            })
+            LogInScreen(onNavigateToHome = { navController.navigate("home_screen")}, viewModel)
         }
         composable("home_screen") {
             HomeScreen(navController, "Beta User", viewModel)

@@ -14,12 +14,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,27 +33,34 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.contacto_efectivo.ui.theme.Contacto_efectivoTheme
+import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 @Composable
-fun LogInScreen(onNavigateToHome: () -> Unit) {
+fun LogInScreen(onNavigateToHome: () -> Unit, viewModel: OperationsViewModel) {
     val context = LocalContext.current
     val image = painterResource(id = R.drawable.leon_png)
-    var userName by remember { mutableStateOf("") }
+    var userName by remember { mutableStateOf(0) }
     var password by remember { mutableStateOf("") }
     var userLabel = ""
     var passLabel = ""
 
-    userLabel = if (userName == "") {
-        "Ingresa tu numbre de usuario"
+    userLabel = if (userName == 0) {
+        "Ingresa tu numero de usuario"
     } else {
-        userName
+        userName.toString()
     }
 
     passLabel = if (password == "" ) {
@@ -91,8 +100,9 @@ fun LogInScreen(onNavigateToHome: () -> Unit) {
                 modifier = Modifier.padding(top=15.dp, bottom = 10.dp)
             )
             TextField(
-                value = userName,
-                onValueChange = {newText -> userName = newText},
+                value = userName.toString(),
+                onValueChange = {newValue -> userName = newValue.toIntOrNull() ?: 0},
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 colors = TextFieldDefaults.colors(
                     unfocusedIndicatorColor = Color.Transparent,
                     unfocusedContainerColor = colorResource(id = R.color.gray_inputs)
@@ -135,6 +145,7 @@ fun LogInScreen(onNavigateToHome: () -> Unit) {
                         context = context,
                         user = userName,
                         password = password,
+                        viewModel = viewModel,
                         navToHome = {onNavigateToHome()})
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.gold_theme)),
@@ -150,17 +161,33 @@ fun LogInScreen(onNavigateToHome: () -> Unit) {
                 )
             }
         }
-
     }
 }
 
 
-private fun accesoPermitido(context: Context, user: String, password: String, navToHome: () -> Unit) {
-    if (user == "Beta" && password == "ContactoEfectivo") {
-        // Lógica para subir la imagen seleccionada
-        navToHome()
-    } else {
-        Toast.makeText(context, "No tienes acceso al app", Toast.LENGTH_SHORT).show()
+private fun accesoPermitido(context: Context, user: Int, password: String, viewModel: OperationsViewModel, navToHome: () -> Unit) {
+    val httpRequests = HttpRequests()
+
+    // Ejecutamos en una corutina, fuera del entorno Composable
+    CoroutineScope(Dispatchers.IO).launch {
+        println("User que se manda: $user")
+        println("Password que se manda: $password")
+        val apiResponse = httpRequests.getUser("empleados/$user/")
+
+        withContext(Dispatchers.Main) {
+            if (apiResponse != null) {
+                if (user == apiResponse.id && password == apiResponse.usuario_password) {
+                    viewModel.repartidorId.value = user
+                    navToHome()
+                } else {
+                    Toast.makeText(context, "No tienes acceso al app", Toast.LENGTH_SHORT).show()
+                    viewModel.repartidorId.value = null
+                }
+            } else {
+                Toast.makeText(context, "Ingresa credenciales validas", Toast.LENGTH_SHORT).show()
+                viewModel.repartidorId.value = null
+            }
+        }
     }
 }
 
@@ -168,6 +195,6 @@ private fun accesoPermitido(context: Context, user: String, password: String, na
 @Composable
 fun LoginPreview() {
     Contacto_efectivoTheme {
-        LogInScreen(onNavigateToHome = {})
+        LogInScreen(onNavigateToHome = {}, viewModel = viewModel())
     }
 }

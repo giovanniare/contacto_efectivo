@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -152,7 +153,9 @@ fun HomeScreen(navController: NavController, deliveryMan: String, viewModel: Ope
             title = { Text(text = "¿Salir de la aplicación?") },
             text = { Text("¿Estás seguro que quieres salir?") },
             confirmButton = {
-                Button(onClick = { activity?.finish() }) {
+                Button(onClick = {
+                    viewModel.repartidorId.value = null
+                    activity?.finish() }) {
                     Text("Sí")
                 }
             },
@@ -223,7 +226,7 @@ fun ScrollableList(viewModel: OperationsViewModel) {
 
     if (getData.value) {
         LaunchedEffect(Unit) {
-            val apiResponse = httpRequests.getAllRepartidor("operacion/${viewModel.repartidorId}/repartidor/")
+            val apiResponse = httpRequests.getAllRepartidor("operacion/${viewModel.repartidorId.value}/repartidor/")
             getData.value = false
             apiResponse?.let {
                 // Actualiza la lista con los resultados de la API
@@ -232,14 +235,27 @@ fun ScrollableList(viewModel: OperationsViewModel) {
         }
     }
 
+    val filteredOperations = operations.value.filter { item -> item.status !in viewModel.noMoreActions }
+    val opActivas = filteredOperations.size
+
     Column {
+        Text(
+            text = "Operaciones asignadas: ${opActivas ?: 0}",
+            textAlign = TextAlign.Justify,
+            color = Color(0xFF213E85),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp)
+        )
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()  // Ocupar todo el ancho
                 .fillMaxHeight(0.7f)  // Limitar a 50% de la altura de la pantalla
                 .padding(16.dp)
         ) {
-            items(operations.value) { item ->  // Usamos 'operations.value' para acceder a los datos
+            items(operations.value.filter { item ->
+                item.status !in viewModel.noMoreActions
+            }) { item ->
                 ListItem(item = item)
                 Divider() // Divider entre los items
             }

@@ -394,7 +394,7 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF213E85)
                         )
-                    } else if(viewModel.repartidorId != parsedData.repartidor) {
+                    } else if(viewModel.repartidorId.value != parsedData.repartidor) {
                         selectedItem = "No repartidor match"
                     }else {
                         Box(

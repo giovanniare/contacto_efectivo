@@ -120,7 +120,7 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF213E85)
                     )
-                } else if(viewModel.repartidorId != parsedData.repartidor) {
+                } else if(viewModel.repartidorId.value != parsedData.repartidor) {
                     Text(
                         text = "Esta operacion esta asignada a otro repartidor. Comunicate con tu analizta.",
                         fontSize = 17.sp,
