@@ -2,12 +2,15 @@ package com.example.contacto_efectivo
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Phone
@@ -23,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -39,7 +43,7 @@ fun ConsultScreen(navController: NavController, viewModel: OperationsViewModel) 
     }
     val opIdDialog = remember { mutableStateOf(true) }
     val success = remember { mutableStateOf(false) }
-    val data = remember { mutableStateOf<String?>(null) }
+    val data = remember { mutableStateOf<OperationApiResponse?>(null) }
     viewModel.onBackfromScanScreen.value = "consult_screen"
 
     if (opIdDialog.value) {
@@ -87,10 +91,10 @@ fun ConsultScreen(navController: NavController, viewModel: OperationsViewModel) 
 }
 
 @Composable
-private fun ShowOperationDetails(operationData: MutableState<String?>) {
-    val operacion = operationData.value?.let { parseJsonToOperacion(it) }
+private fun ShowOperationDetails(operationData: MutableState<OperationApiResponse?>) {
+    val operacion = operationData.value
 
-    operacion?.let {
+    if (operacion != null) {
         Column {
             Text(
                 text = "ID de Operacion:",
@@ -104,7 +108,7 @@ private fun ShowOperationDetails(operationData: MutableState<String?>) {
 
             )
             Text(
-                text = "${it.codigo}",
+                text = "${operacion.codigo}",
                 fontSize = 20.sp,
                 color = Color.Black,
                 fontWeight = FontWeight.Bold,
@@ -126,7 +130,7 @@ private fun ShowOperationDetails(operationData: MutableState<String?>) {
 
             )
             Text(
-                text = it.status,
+                text = operacion.status,
                 fontSize = 20.sp,
                 color = Color.Black,
                 fontWeight = FontWeight.Bold,
@@ -148,7 +152,7 @@ private fun ShowOperationDetails(operationData: MutableState<String?>) {
 
             )
             Text(
-                text = "Tipo: ${it.id_tipo_operacion}",
+                text = "Tipo: ${operacion.id_tipo_operacion}",
                 fontSize = 18.sp,
                 textAlign = TextAlign.Justify,
                 color = Color(0xFF213E85),
@@ -168,7 +172,7 @@ private fun ShowOperationDetails(operationData: MutableState<String?>) {
 
             )
             Text(
-                text = it.direccion_inicio,
+                text = operacion.direccion_inicio,
                 fontSize = 18.sp,
                 textAlign = TextAlign.Justify,
                 color = Color.Black,
@@ -188,7 +192,7 @@ private fun ShowOperationDetails(operationData: MutableState<String?>) {
 
             )
             Text(
-                text = it.direccion_final,
+                text = operacion.direccion_final,
                 fontSize = 18.sp,
                 textAlign = TextAlign.Justify,
                 color = Color.Black,
@@ -208,7 +212,7 @@ private fun ShowOperationDetails(operationData: MutableState<String?>) {
 
             )
             Text(
-                text = it.nombre_referencia,
+                text = operacion.nombre_referencia,
                 fontSize = 18.sp,
                 textAlign = TextAlign.Justify,
                 color = Color.Black,
@@ -218,9 +222,9 @@ private fun ShowOperationDetails(operationData: MutableState<String?>) {
 
             )
 
-            CallButton(phoneNumber = it.numero_referencia)
+            CallButton(phoneNumber = operacion.numero_referencia)
         }
-    } ?: run {
+    } else {
         Text(text = "No se pudo cargar la operación.")
     }
 }
@@ -229,28 +233,62 @@ private fun ShowOperationDetails(operationData: MutableState<String?>) {
 fun CallButton(phoneNumber: String) {
     val context = LocalContext.current
 
-    Button(
-        onClick = {
-            // Crear el Intent para iniciar la app de llamadas
-            val intent = Intent(Intent.ACTION_DIAL).apply {
-                data = Uri.parse("tel:$phoneNumber")
-            }
-            try {
-                // Iniciar la actividad de llamada
-                ContextCompat.startActivity(context, intent, null)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        },
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
-        shape = RoundedCornerShape(13.dp),
-        modifier = Modifier.padding(16.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Default.Phone,
-            contentDescription = "Llamar",
-            tint = Color.White
-        )
-        Text(text = "Llamar", color = Color.White)
+    Row{
+        Button(
+            onClick = {
+                try {
+                    // Crear el Intent para iniciar la app de llamadas
+                    val intent = Intent(Intent.ACTION_DIAL).apply {
+                        data = Uri.parse("tel:$phoneNumber")
+                    }
+                    // Iniciar la actividad de llamada
+                    ContextCompat.startActivity(context, intent, null)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Numero invalido", Toast.LENGTH_SHORT).show()
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
+            shape = RoundedCornerShape(13.dp),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Phone,
+                contentDescription = "Llamar",
+                tint = Color.White
+            )
+            Text(text = "Llamar", color = Color.White)
+        }
+        Button(
+            onClick = {
+                try {
+                    // Crear el Intent para iniciar la app de llamadas
+                    var fullNumber = ""
+                    if (phoneNumber.contains("+52")){
+                        fullNumber = phoneNumber
+                    } else {
+                        fullNumber = "+52$phoneNumber{}"
+                    }
+
+                    val uri = Uri.parse("https://api.whatsapp.com/send?phone=$fullNumber")
+                    val intent = Intent(Intent.ACTION_VIEW, uri)
+                    intent.setPackage("com.whatsapp")
+                    // Iniciar la actividad de llamada
+                    ContextCompat.startActivity(context, intent, null)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Un error ocurrio.", Toast.LENGTH_SHORT).show()
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
+            shape = RoundedCornerShape(13.dp),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.whatsapp_white),
+                contentDescription = "Whatsapp",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(text = "Mensaje", color = Color.White)
+        }
     }
 }

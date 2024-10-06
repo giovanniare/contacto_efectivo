@@ -69,6 +69,7 @@ fun HomeScreen(navController: NavController, deliveryMan: String, viewModel: Ope
     
     BackHandler {
         showDialog.value = true
+        viewModel.tipoOperacion.value = null
     }
     
     Column(
@@ -97,7 +98,7 @@ fun HomeScreen(navController: NavController, deliveryMan: String, viewModel: Ope
                         .weight(1f)
                         .fillMaxHeight()
                 ) {
-                    OperationsMenu(navController)
+                    OperationsMenu(navController, viewModel)
                 }
 
                 Button(
@@ -171,11 +172,13 @@ fun HomeScreen(navController: NavController, deliveryMan: String, viewModel: Ope
 }
 
 @Composable
-fun OperationsMenu(navController: NavController){
+fun OperationsMenu(navController: NavController, viewModel: OperationsViewModel){
     var expanded by remember { mutableStateOf(false) }
 
     Button(
-        onClick = { expanded = !expanded },
+        onClick = {
+            viewModel.tipoOperacion.value = null
+            expanded = !expanded },
         shape = RoundedCornerShape(13.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
         modifier = Modifier
@@ -199,19 +202,25 @@ fun OperationsMenu(navController: NavController){
             text = {
                 Text(text = stringResource(id = R.string.opt_terceros))
             },
-            onClick = { navController.navigate("third_screen") }
+            onClick = {
+                viewModel.tipoOperacion.value = "terceros"
+                navController.navigate("third_screen") }
         )
         DropdownMenuItem(
             text = {
                 Text(text = stringResource(id = R.string.opt_prod))
             },
-            onClick = { navController.navigate("update_screen") }
+            onClick = {
+                viewModel.tipoOperacion.value = "producto"
+                navController.navigate("update_screen") }
         )
         DropdownMenuItem(
             text = {
                 Text(text = stringResource(id = R.string.opt_clt))
             },
-            onClick = { navController.navigate("update_screen") }
+            onClick = {
+                viewModel.tipoOperacion.value = "interna"
+                navController.navigate("update_screen") }
         )
     }
 }

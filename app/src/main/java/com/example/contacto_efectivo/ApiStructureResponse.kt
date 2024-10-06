@@ -3,9 +3,9 @@ package com.example.contacto_efectivo
 import com.google.gson.Gson
 
 data class OperationApiResponse(
-    val url: String,
-    val fecha_inicio: String,
+    val id: Int,
     val id_tipo_operacion: String,
+    val fecha_inicio: String,
     val codigo: String?,
     var status: String,
     val direccion_inicio: String,

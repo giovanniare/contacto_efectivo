@@ -46,13 +46,14 @@ import androidx.navigation.NavController
 fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
 
     BackHandler {
+        viewModel.tipoOperacion.value = null
         navController.navigate("home_screen")
     }
 
     var operationStatus = remember { mutableStateOf("") }
     val opIdDialog = remember { mutableStateOf(true) }
     val success = remember { mutableStateOf(false) }
-    val operationData = remember { mutableStateOf<String?>(null) }
+    val operationData = remember { mutableStateOf<OperationApiResponse?>(null) }
     var canUpdateStatus = remember { mutableStateOf(false) }
 
     viewModel.onBackfromScanScreen.value = "update_screen"
@@ -72,7 +73,7 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
         )
     }
 
-    var parsedData = operationData.value?.let { parseJsonToOperacion(it) }
+    var parsedData = operationData.value
     if (parsedData != null) {
         operationStatus.value = parsedData.status
     } else if (viewModel.keepData.value && viewModel.operationScaneed != null) {
@@ -85,8 +86,8 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
 
     if (operationStatus.value !in viewModel.noMoreActions && parsedData != null) {
         canUpdateStatus.value = true
-        println("SE puede actualizar: ${operationStatus.value}")
-        println("Data: ${parsedData}")
+        // println("SE puede actualizar: ${operationStatus.value}")
+        // println("Data: ${parsedData}")
     }
 
     LaunchedEffect(operationStatus.value) {
@@ -106,9 +107,9 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
                 .fillMaxWidth()
         ) {
             if (parsedData != null) {
-                if (parsedData.id_tipo_operacion == "terceros") {
+                if (parsedData.id_tipo_operacion != viewModel.tipoOperacion.value) {
                     Text(
-                        text = "No puedes actualizar esta operacion desde este menu. Selecciona terceros en el menu de operaciones para continuar.",
+                        text = "No puedes actualizar esta operacion desde este menu. Selecciona ${parsedData.id_tipo_operacion} en el menu de operaciones para continuar.",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF213E85)
@@ -166,6 +167,7 @@ fun Options(
 
     // Actualiza el valor de las opciones basado en el estado de operationStatus
     when (operationStatus.value) {
+        "creada" -> nextOptions = viewModel.agendada
         "agendada" -> nextOptions = viewModel.agendada
         "en ruta" -> nextOptions = viewModel.enRuta
         "efectiva" -> nextOptions = viewModel.efectiva

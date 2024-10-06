@@ -45,6 +45,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -316,13 +318,14 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
 
 
     BackHandler {
+        viewModel.tipoOperacion.value = null
         navController.navigate("home_screen")
     }
 
     var operationStatus = remember { mutableStateOf("") }
     val opIdDialog = remember { mutableStateOf(true) }
     val success = remember { mutableStateOf(false) }
-    val operationData = remember { mutableStateOf<String?>(null) }
+    val operationData = remember { mutableStateOf<OperationApiResponse?>(null) }
     var canUpdateStatus = remember { mutableStateOf(false) }
 
     viewModel.onBackfromScanScreen.value = "third_screen"
@@ -342,7 +345,7 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
         )
     }
 
-    var parsedData = operationData.value?.let { parseJsonToOperacion(it) }
+    var parsedData = operationData.value
     if (parsedData != null) {
         operationStatus.value = parsedData.status
         viewModel.operationScaneed = parsedData
@@ -378,7 +381,7 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                     .padding(16.dp)
             ) {
                 if (parsedData != null) {
-                    if (parsedData.id_tipo_operacion != "terceros") {
+                    if (parsedData.id_tipo_operacion != viewModel.tipoOperacion.value) {
                         selectedItem = "No permitido"
                         Text(
                             text = "No puedes actualizar esta operacion desde este menu. Selecciona ${parsedData.id_tipo_operacion} en el menu de operaciones para continuar.",
@@ -446,20 +449,36 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                             }
                         }
                     }
+                } else {
+                    Text(
+                        text = "No tienes acceso a esta operacion",
+                        fontSize = 30.sp,
+                        color = Color(0xFF213E85),
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+                        modifier = Modifier
+                            .padding(top = 30.dp)
+                            .align(Alignment.CenterHorizontally)
+
+                    )
                 }
                 when (selectedItem) {
-                    "Iniciar ruta" -> StartRoute({navController.navigate("home_screen")}, {
+                    "Iniciar ruta" -> {
                         if (parsedData != null) {
-                            viewModel.keepData.value = true
-                            navController.navigate("photo_screen")
+                            StartRoute({ navController.navigate("home_screen") }, {
+                                viewModel.keepData.value = true
+                                navController.navigate("photo_screen")
+                            }, viewModel)
                         }
-                    }, viewModel)
-                    "Finalizar ruta" -> EndRoute({navController.navigate("home_screen")}, {
+                    }
+                    "Finalizar ruta" -> {
                         if (parsedData != null) {
-                            viewModel.keepData.value = true
-                            navController.navigate("photo_screen")
+                            EndRoute({ navController.navigate("home_screen") }, {
+                                viewModel.keepData.value = true
+                                navController.navigate("photo_screen")
+                            }, viewModel)
                         }
-                    }, viewModel)
+                    }
                     "No permitido" -> Text(
                         text = "No puedes actualizar el estatus de esta operacion",
                         fontSize = 17.sp,

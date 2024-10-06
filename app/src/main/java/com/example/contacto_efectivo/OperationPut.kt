@@ -13,6 +13,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.logging.Level
 import java.util.logging.Logger
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 
 interface OperationApiService {
 
@@ -40,9 +42,15 @@ object RetrofitClient {
             .addInterceptor(loggingInterceptor)
             .build()
 
+        // Configura Gson para que incluya campos null
+        val gson: Gson = GsonBuilder()
+            .serializeNulls()  // Esto permitirá serializar campos null en el body
+            .create()
+
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create(gson)) // Usar el Gson personalizado
             .build()
             .create(OperationApiService::class.java)
     }

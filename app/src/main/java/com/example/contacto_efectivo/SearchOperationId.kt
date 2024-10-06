@@ -28,7 +28,7 @@ import com.google.gson.Gson
 fun AskOperationId(
     operationDialog: MutableState<Boolean>,
     success: MutableState<Boolean>,
-    data: MutableState<String?>,
+    data: MutableState<OperationApiResponse?>,
     onScanScreen: () -> Unit,
     viewModel: OperationsViewModel,
     navController: NavController
@@ -95,12 +95,16 @@ fun AskOperationId(
         if (loading) {
             LaunchedEffect(Unit) {
                 val apiResponse = httpRequests.getOperation("operacion/${userInput.value}/codigo/")
+                println("Esta es la respuesta cruda del api: ${apiResponse}")
+                data.value = apiResponse
                 loading = false
-                apiResponse?.let {
+                success.value = true
+                /*apiResponse?.let {
                     // Convierte el objeto a JSON para la navegación
                     data.value = Gson().toJson(it)
+                    println("Aqui la respuesta parceada a json: ${data.value}")
                     success.value = true
-                }
+                }*/
                 operationDialog.value = false
             }
         }
@@ -114,11 +118,14 @@ fun AskOperationId(
 
             LaunchedEffect(Unit) {
                 val apiResponse = httpRequests.getOperation("operacion/${userInput.value}/codigo/")
-                apiResponse?.let {
+                println("Esta es la respuesta cruda del api: ${apiResponse}")
+                data.value = apiResponse
+                success.value = true
+                /*apiResponse?.let {
                     // Convierte el objeto a JSON para la navegación
                     data.value = Gson().toJson(it)
                     success.value = true
-                }
+                }*/
                 operationDialog.value = false
                 //viewModel.operationId.value = null // Reinicia el código escaneado
             }
