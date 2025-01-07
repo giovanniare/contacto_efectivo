@@ -48,6 +48,13 @@ data class User(
     val usuario_password: String
 )
 
+data class AuthData(
+    val id: Int,
+    val user_id: String,
+    val token: String,
+    val created: String
+)
+
 fun parseJsonToUser(jsonString: String): User? {
     return try {
         Gson().fromJson(jsonString, User::class.java)

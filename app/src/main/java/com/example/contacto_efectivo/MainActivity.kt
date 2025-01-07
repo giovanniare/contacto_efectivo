@@ -13,8 +13,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,6 +26,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.contacto_efectivo.ui.theme.Contacto_efectivoTheme
+import kotlinx.coroutines.delay
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -76,8 +79,24 @@ class MainActivity : ComponentActivity() {
 fun MyApp() {
     val navController = rememberNavController()
     val viewModel: OperationsViewModel = viewModel()
+    var startScreen by remember { mutableStateOf<String>("") }
+    val tokenManager = TokenManager(context = LocalContext.current)
+    val token = tokenManager.getToken()
+    startScreen = if (token != null) "home_screen" else "login"
 
-    NavHost(navController = navController, startDestination = "login")
+    LaunchedEffect(token) {
+        val httpRequests = HttpRequests()
+        val validToken = httpRequests.validateToken(token)
+
+        if (validToken != null) {
+            startScreen = "home_screen"
+        } else {
+            startScreen = "login"
+            tokenManager.clearToken()
+        }
+    }
+
+    NavHost(navController = navController, startDestination = startScreen)
     {
         composable("login") {
             LogInScreen(onNavigateToHome = { navController.navigate("home_screen")}, viewModel)
