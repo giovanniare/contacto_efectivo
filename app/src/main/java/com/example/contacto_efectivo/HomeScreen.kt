@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
@@ -61,12 +62,11 @@ import androidx.navigation.compose.rememberNavController
 import com.example.contacto_efectivo.ui.theme.Contacto_efectivoTheme
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.processNextEventInCurrentThread
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
     val showDialog = remember { mutableStateOf(false) }
-    val opIdDialog = remember { mutableStateOf(false) }
-    val optMenu = remember { mutableStateOf("") }
     val activity = (LocalContext.current as? Activity)
     val userManager = UserManager(LocalContext.current)
     val userName = userManager.getName()
@@ -94,7 +94,7 @@ fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            ScrollableList(viewModel = viewModel)
+            ScrollableList(viewModel = viewModel, navController = navController)
             Row(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
@@ -240,7 +240,7 @@ fun OperationsMenu(navController: NavController, viewModel: OperationsViewModel)
 }
 
 @Composable
-fun ScrollableList(viewModel: OperationsViewModel) {
+fun ScrollableList(viewModel: OperationsViewModel, navController: NavController) {
     // Usa 'remember' para mantener la lista entre recomposiciones
     val context = LocalContext.current
     val operations = remember { mutableStateOf(listOf<OperationApiResponse>()) }
@@ -250,6 +250,11 @@ fun ScrollableList(viewModel: OperationsViewModel) {
 
     if (getData.value) {
         LaunchedEffect(Unit) {
+            viewModel.operationSelected = null
+            viewModel.dataFromSelectedItem.value = null
+            viewModel.repartidorId.value = null
+            viewModel.tipoOperacion.value = null
+
             val apiResponse = httpRequests.getAllRepartidor("operacion/${tokenManager.getUserId()}/repartidor/", tokenManager.getToken())
             getData.value = false
             apiResponse?.let {
@@ -261,6 +266,7 @@ fun ScrollableList(viewModel: OperationsViewModel) {
 
     val filteredOperations = operations.value.filter { item -> item.status !in viewModel.noMoreActions }
     val opActivas = filteredOperations.size
+    val operationMap = mutableMapOf<String?, OperationApiResponse>()
 
     Column {
         Text(
@@ -280,7 +286,8 @@ fun ScrollableList(viewModel: OperationsViewModel) {
             items(operations.value.filter { item ->
                 item.status !in viewModel.noMoreActions
             }) { item ->
-                ListItem(item = item)
+                operationMap[item.codigo] = item
+                ListItem(item = item, operationMap = operationMap, viewModel = viewModel, navController = navController)
                 Divider() // Divider entre los items
             }
         }
@@ -307,26 +314,72 @@ fun ScrollableList(viewModel: OperationsViewModel) {
 }
 
 @Composable
-fun ListItem(item: OperationApiResponse) {
+fun ListItem(item: OperationApiResponse, operationMap: MutableMap<String?, OperationApiResponse>, viewModel: OperationsViewModel, navController: NavController) {
+    val codigo = item.codigo
+
     Column(modifier = Modifier
         .fillMaxWidth()
         .padding(16.dp)) {
         Text(
-            text = "Código: ${item.codigo ?: "Sin código"}",
+            text = "Código: ${codigo ?: "Sin código"} \n" +
+                "Tipo de Operación: ${item.id_tipo_operacion}",
             textAlign = TextAlign.Justify,
+            fontWeight = FontWeight.Bold,
             color = Color(0xFF213E85),
+            fontSize = 14.sp,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 4.dp)
         )
-        Text(
-            text = "Tipo de Operación: ${item.id_tipo_operacion}",
-            textAlign = TextAlign.Justify,
-            color = Color(0xFF213E85),
+        Row(
+            horizontalArrangement = Arrangement.Absolute.Left,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 4.dp)
-        )
+                .padding(top = 7.dp, bottom = 7.dp)
+                .height(40.dp)
+        ) {
+            Button(
+                onClick = {
+                    println("Codigo: $codigo")
+                    viewModel.operationSelected = operationMap[codigo]
+                    viewModel.dataFromSelectedItem.value = true
+                    println("operacion: ${viewModel.operationSelected}")
+                    navController.navigate("consult_screen")
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
+                shape = RoundedCornerShape(13.dp),
+                modifier = Modifier
+                    .height(40.dp)
+                    .padding(end = 5.dp)
+            ) {
+                Text(
+                    text = "Info",
+                    color = Color.White
+                )
+            }
+            Button(
+                onClick = {
+                    println("Codigo: $codigo")
+                    viewModel.operationSelected = operationMap[codigo]
+                    viewModel.dataFromSelectedItem.value = true
+                    viewModel.repartidorId.value = operationMap[codigo]?.repartidor
+                    viewModel.tipoOperacion.value = operationMap[codigo]?.id_tipo_operacion
+                    println("operacion: ${viewModel.operationSelected}")
+                    val screen = if (item.id_tipo_operacion == "terceros") "third_screen" else "update_screen"
+                    navController.navigate(screen)
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
+                shape = RoundedCornerShape(13.dp),
+                modifier = Modifier
+                    .height(40.dp)
+                    .padding(start = 5.dp)
+            ) {
+                Text(
+                    text = "Mover",
+                    color = Color.White
+                )
+            }
+        }
     }
 }
 

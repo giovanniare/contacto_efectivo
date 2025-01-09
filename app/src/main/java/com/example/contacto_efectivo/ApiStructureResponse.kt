@@ -24,7 +24,9 @@ data class OperationApiResponse(
     val ancho: Int,
     val alto: Int,
     var entregas: Int,
-    var devoluciones: Int
+    var devoluciones: Int,
+    val codigo_postal: Int,
+    val imagen: String?
 )
 
 // Función para convertir el JSON a un objeto Operacion

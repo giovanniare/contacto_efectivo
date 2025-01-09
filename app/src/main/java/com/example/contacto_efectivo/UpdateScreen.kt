@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -34,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -55,6 +58,7 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
     val success = remember { mutableStateOf(false) }
     val operationData = remember { mutableStateOf<OperationApiResponse?>(null) }
     var canUpdateStatus = remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     viewModel.onBackfromScanScreen.value = "update_screen"
 
@@ -62,7 +66,12 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
         opIdDialog.value = false
     }
 
-    if (opIdDialog.value && !viewModel.keepData.value) {
+    if (viewModel.dataFromSelectedItem.value != null && viewModel.operationSelected != null) {
+        success.value = true
+        operationData.value = viewModel.operationSelected
+        println("Data scanned: ${operationData.value}")
+        opIdDialog.value = false
+    } else if (opIdDialog.value && !viewModel.keepData.value) {
         AskOperationId(
             operationDialog = opIdDialog,
             success = success,
@@ -105,6 +114,7 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
+                .verticalScroll(scrollState)
         ) {
             if (parsedData != null) {
                 if (parsedData.id_tipo_operacion != viewModel.tipoOperacion.value) {
@@ -141,6 +151,11 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
 
         }
     }
+
+    LaunchedEffect(operationData.value) {
+        viewModel.operationSelected = null
+        viewModel.dataFromSelectedItem.value = null
+    }
 }
 
 @Composable
@@ -156,6 +171,8 @@ fun Options(
     var nextOptions by remember { mutableStateOf(listOf("")) }
     var nextStatus = remember { mutableStateOf("") }
     val opIdDialog = remember { mutableStateOf(false) }
+    val tokenManager = TokenManager(LocalContext.current)
+    val token = tokenManager.getToken()
 
     if (nextStatus.value == "" && operationStatus.value != "Sin estado") {
         nextStatus.value = operationStatus.value
@@ -176,6 +193,16 @@ fun Options(
             canUpdateStatus.value = false
             nextOptions = viewModel.noMoreActions
         }
+    }
+
+    Text(
+        text = "${operationData?.id_tipo_operacion} : ${operationData?.codigo}",
+        fontSize = 25.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color(0xFF213E85)
+    )
+    if (operationData != null) {
+        CallButton(phoneNumber = operationData.numero_referencia)
     }
 
     Text(
@@ -316,7 +343,7 @@ fun Options(
                 if (operationData != null) {
                     operationData.status = nextStatus.value
                     var codigo= operationData.codigo.toString()
-                    sendUpdate(navController, operationData, codigo)
+                    sendUpdate(navController, operationData, codigo, token = token)
                 } else {
                     //
                 }
@@ -359,10 +386,15 @@ fun Options(
 private fun sendUpdate(
     navController: NavController,
     operationData: OperationApiResponse?,
-    codigo: String
+    codigo: String,
+    token: String?
 ) {
     if (operationData != null) {
-        updateOperationStatus(codigo, operationData)
+        updateOperationStatus(codigo, operationData, token)
     }
-    navController.navigate("home_screen")
+    navController.navigate("home_screen") {
+        launchSingleTop = true // Evita duplicados en la pila
+        restoreState = false   // Ignora el estado guardado
+        popUpTo("home_screen") { inclusive = true }
+    }
 }

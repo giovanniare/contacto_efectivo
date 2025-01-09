@@ -13,6 +13,8 @@ class OperationsViewModel: ViewModel() {
     var nextStatus = mutableStateOf<String?>(null)
     var repartidorId = mutableStateOf<Int?>(null)
     var tipoOperacion = mutableStateOf<String?>(null)
+    var dataFromSelectedItem = mutableStateOf<Boolean?>(null)
+    var operationSelected:OperationApiResponse? = null
 
     val agendada = listOf("en ruta", "cancelada", "entregada")
     val enRuta = listOf("efectiva", "transferencia", "reagendada", "cancelada", "entregada")

@@ -1,5 +1,6 @@
 package com.example.contacto_efectivo
 
+import androidx.compose.ui.platform.LocalContext
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
@@ -15,18 +16,21 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import okhttp3.Interceptor
+import retrofit2.http.Header
 
 interface OperationApiService {
 
     @PUT("operacion/{id}/codigo/")
     fun updateOperation(
         @Path("id") operationId: String,
-        @Body operation: OperationApiResponse
+        @Body operation: OperationApiResponse,
+        @Header("token") token: String?
     ): Call<Void>
 }
 
 object RetrofitClient {
-    private const val BASE_URL = "http://137.184.226.78:8000/"
+    private const val BASE_URL = "https://walrus-app-ja4xp.ondigitalocean.app/"
 
     val apiService: OperationApiService by lazy {
 
@@ -56,10 +60,10 @@ object RetrofitClient {
     }
 }
 
-fun updateOperationStatus(operationId: String, operation: OperationApiResponse) {
+fun updateOperationStatus(operationId: String, operation: OperationApiResponse, token: String?) {
     val apiService = RetrofitClient.apiService
 
-    val call = apiService.updateOperation(operationId, operation)
+    val call = apiService.updateOperation(operationId, operation, token)
     call.enqueue(object : Callback<Void> {
         override fun onResponse(call: Call<Void>, response: Response<Void>) {
             println("Esta es la url a la que mandamos request: ${call.request().url}")

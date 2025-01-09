@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -60,6 +62,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult as rememberLa
 private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit, viewModel: OperationsViewModel) {
     var count by remember { mutableIntStateOf(0) }
     val opIdDialog = remember { mutableStateOf(false) }
+    val tokenManager = TokenManager(context = LocalContext.current)
+    val token = tokenManager.getToken()
 
     Column(
         modifier = Modifier
@@ -123,7 +127,7 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
             Button(
                 onClick = {
                     viewModel.thirdOperationInCourse.value = true
-                    sendUpdate(viewModel, recibidos = count)
+                    sendUpdate(viewModel, recibidos = count, token = token)
                     onNavigateToHome() },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
                 shape = RoundedCornerShape(13.dp),
@@ -169,6 +173,8 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
     var entregados by remember { mutableIntStateOf(0) }
     var devoluciones by remember { mutableIntStateOf(0) }
     val opIdDialog = remember { mutableStateOf(false) }
+    val tokenManager = TokenManager(LocalContext.current)
+    val token = tokenManager.getToken()
 
     Column(
         modifier = Modifier
@@ -262,7 +268,7 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
             Button(
                 onClick = {
                     viewModel.thirdOperationInCourse.value = false
-                    sendUpdate(viewModel, end = true, entregados = entregados, devoluciones = devoluciones)
+                    sendUpdate(viewModel, end = true, entregados = entregados, devoluciones = devoluciones, token =  token)
                     entregados = 0
                     devoluciones = 0
                     onNavigateToHome() },
@@ -327,6 +333,7 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
     val success = remember { mutableStateOf(false) }
     val operationData = remember { mutableStateOf<OperationApiResponse?>(null) }
     var canUpdateStatus = remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     viewModel.onBackfromScanScreen.value = "third_screen"
 
@@ -334,7 +341,12 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
         opIdDialog.value = false
     }
 
-    if (opIdDialog.value && !viewModel.keepData.value) {
+    if (viewModel.dataFromSelectedItem.value != null && viewModel.operationSelected != null) {
+        success.value = true
+        operationData.value = viewModel.operationSelected
+        println("Data scanned: ${operationData.value}")
+        opIdDialog.value = false
+    } else if (opIdDialog.value && !viewModel.keepData.value) {
         AskOperationId(
             operationDialog = opIdDialog,
             success = success,
@@ -379,6 +391,7 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
+                    .verticalScroll(scrollState)
             ) {
                 if (parsedData != null) {
                     if (parsedData.id_tipo_operacion != viewModel.tipoOperacion.value) {
@@ -400,6 +413,15 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                     } else if(viewModel.repartidorId.value != parsedData.repartidor) {
                         selectedItem = "No repartidor match"
                     }else {
+                        Text(
+                            text = "${parsedData.id_tipo_operacion} : ${parsedData.codigo}",
+                            fontSize = 25.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF213E85)
+                        )
+                        CallButton(phoneNumber = parsedData.numero_referencia)
+
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -433,8 +455,10 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                                         Text(text = "Iniciar ruta")
                                     },
                                     onClick = {
+                                        println("click: ${selectedItem}")
                                         selectedItem = "Iniciar ruta"
                                         expanded = false
+                                        println("click: ${selectedItem}")
                                     }
                                 )
                                 DropdownMenuItem(
@@ -442,8 +466,10 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                                         Text(text = "Finalizar ruta")
                                     },
                                     onClick = {
+                                        println("click: ${selectedItem}")
                                         selectedItem = "Finalizar ruta"
                                         expanded = false
+                                        println("click: ${selectedItem}")
                                     }
                                 )
                             }
@@ -465,7 +491,14 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                 when (selectedItem) {
                     "Iniciar ruta" -> {
                         if (parsedData != null) {
-                            StartRoute({ navController.navigate("home_screen") }, {
+                            StartRoute(
+                                {
+                                    navController.navigate("home_screen") {
+                                        launchSingleTop = true // Evita duplicados en la pila
+                                        restoreState = false   // Ignora el estado guardado
+                                        popUpTo("home_screen") { inclusive = true }
+                                    }
+                                }, {
                                 viewModel.keepData.value = true
                                 navController.navigate("photo_screen")
                             }, viewModel)
@@ -473,7 +506,14 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                     }
                     "Finalizar ruta" -> {
                         if (parsedData != null) {
-                            EndRoute({ navController.navigate("home_screen") }, {
+                            EndRoute(
+                                {
+                                    navController.navigate("home_screen") {
+                                        launchSingleTop = true // Evita duplicados en la pila
+                                        restoreState = false   // Ignora el estado guardado
+                                        popUpTo("home_screen") { inclusive = true }
+                                    }
+                                }, {
                                 viewModel.keepData.value = true
                                 navController.navigate("photo_screen")
                             }, viewModel)
@@ -504,9 +544,14 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
             }
         }
     }
+
+    LaunchedEffect(operationData.value) {
+        viewModel.operationSelected = null
+        viewModel.dataFromSelectedItem.value = null
+    }
 }
 
-private fun sendUpdate(viewModel: OperationsViewModel, recibidos: Int = 0, entregados: Int = 0, devoluciones: Int = 0, end: Boolean = false, ) {
+private fun sendUpdate(viewModel: OperationsViewModel, recibidos: Int = 0, entregados: Int = 0, devoluciones: Int = 0, end: Boolean = false, token: String?) {
     var opData = viewModel.operationScaneed
     var codigo = opData?.codigo
 
@@ -520,7 +565,7 @@ private fun sendUpdate(viewModel: OperationsViewModel, recibidos: Int = 0, entre
             opData.status = "en ruta"
         }
 
-        updateOperationStatus(codigo, opData)
+        updateOperationStatus(codigo, opData, token)
         viewModel.keepData.value = false
         viewModel.operationScaneed = null
     }

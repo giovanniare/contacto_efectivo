@@ -19,6 +19,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,7 +47,12 @@ fun ConsultScreen(navController: NavController, viewModel: OperationsViewModel) 
     val data = remember { mutableStateOf<OperationApiResponse?>(null) }
     viewModel.onBackfromScanScreen.value = "consult_screen"
 
-    if (opIdDialog.value) {
+    if (viewModel.dataFromSelectedItem.value != null && viewModel.operationSelected != null) {
+        success.value = true
+        data.value = viewModel.operationSelected
+        println("Data scanned: ${data.value}")
+        opIdDialog.value = false
+    } else if (opIdDialog.value) {
         AskOperationId(
             operationDialog = opIdDialog,
             success = success,
@@ -84,9 +90,12 @@ fun ConsultScreen(navController: NavController, viewModel: OperationsViewModel) 
 
                 )
             }
-
         }
+    }
 
+    LaunchedEffect(data.value) {
+        viewModel.operationSelected = null
+        viewModel.dataFromSelectedItem.value = null
     }
 }
 

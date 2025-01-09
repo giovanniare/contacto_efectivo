@@ -1,7 +1,9 @@
 package com.example.contacto_efectivo
 
+import android.app.Activity
 import android.content.Context
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -56,10 +58,15 @@ import kotlin.system.exitProcess
 @Composable
 fun LogInScreen(onNavigateToHome: () -> Unit, viewModel: OperationsViewModel) {
     val context = LocalContext.current
+    val activity = (context as? Activity)
     val image = painterResource(id = R.drawable.leon_png)
     var userName by remember { mutableStateOf<String>("") }
     var password by remember { mutableStateOf("") }
     var isLoading = mutableStateOf(true)
+
+    BackHandler {
+        activity?.finish()
+    }
 
     Column(
         modifier = Modifier
