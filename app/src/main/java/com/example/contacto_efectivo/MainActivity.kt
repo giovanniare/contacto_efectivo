@@ -82,17 +82,21 @@ fun MyApp() {
     var startScreen by remember { mutableStateOf<String>("") }
     val tokenManager = TokenManager(context = LocalContext.current)
     val token = tokenManager.getToken()
+    val userManager = UserManager(context = LocalContext.current)
     startScreen = if (token != null) "home_screen" else "login"
 
-    LaunchedEffect(token) {
+    LaunchedEffect(Unit) {
         val httpRequests = HttpRequests()
+        println("Token: $token")
         val validToken = httpRequests.validateToken(token)
+        println("Valid Token: $validToken")
 
         if (validToken != null) {
             startScreen = "home_screen"
         } else {
             startScreen = "login"
             tokenManager.clearToken()
+            userManager.clearUser()
         }
     }
 
@@ -102,7 +106,7 @@ fun MyApp() {
             LogInScreen(onNavigateToHome = { navController.navigate("home_screen")}, viewModel)
         }
         composable("home_screen") {
-            HomeScreen(navController, "Beta User", viewModel)
+            HomeScreen(navController, viewModel)
             viewModel.keepData.value = false
             viewModel.operationScaneed = null
             viewModel.nextStatus.value = null

@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.gson.Gson
@@ -37,6 +38,7 @@ fun AskOperationId(
     val userInput = remember { mutableStateOf("") }
     val httpRequests = HttpRequests()
     var loading by remember { mutableStateOf(false) }
+    val tokenManager = TokenManager(context = LocalContext.current)
 
     // Observa el valor de scannedCode en el ViewModel
     LaunchedEffect(viewModel.operationId.value) {
@@ -94,7 +96,7 @@ fun AskOperationId(
         // Usar LaunchedEffect fuera del AlertDialog
         if (loading) {
             LaunchedEffect(Unit) {
-                val apiResponse = httpRequests.getOperation("operacion/${userInput.value}/codigo/")
+                val apiResponse = httpRequests.getOperation("operacion/${userInput.value}/codigo/", tokenManager.getToken())
                 println("Esta es la respuesta cruda del api: ${apiResponse}")
                 data.value = apiResponse
                 loading = false
@@ -117,7 +119,7 @@ fun AskOperationId(
             println("Este es el valor escaneado - viewModel: ${viewModel.operationId.value}")
 
             LaunchedEffect(Unit) {
-                val apiResponse = httpRequests.getOperation("operacion/${userInput.value}/codigo/")
+                val apiResponse = httpRequests.getOperation("operacion/${userInput.value}/codigo/", tokenManager.getToken())
                 println("Esta es la respuesta cruda del api: ${apiResponse}")
                 data.value = apiResponse
                 success.value = true

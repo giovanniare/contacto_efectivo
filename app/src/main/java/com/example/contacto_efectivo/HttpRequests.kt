@@ -1,11 +1,15 @@
 package com.example.contacto_efectivo
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.lang.reflect.Type
 
@@ -14,11 +18,17 @@ class HttpRequests {
     private val client = OkHttpClient()
     private val gson = Gson() // Inicializa Gson
 
-    suspend fun getOperation(endPointStr: String): OperationApiResponse? {
+    suspend fun getOperation(endPointStr: String, token: String?): OperationApiResponse? {
+        if (token == null || token == "") {
+            println("Token invalido desde: **** getOperation ****")
+            return null
+        }
+
         println("Esta es la url que se manda: $urlApiBase_/$endPointStr")
         return withContext(Dispatchers.IO) {
             val request = Request.Builder()
                 .url("$urlApiBase_/$endPointStr")
+                .addHeader("token", token)
                 .build()
 
             try {
@@ -40,11 +50,17 @@ class HttpRequests {
         }
     }
 
-    suspend fun getAllRepartidor(endPointStr: String): List<OperationApiResponse>? {
+    suspend fun getAllRepartidor(endPointStr: String, token: String?): List<OperationApiResponse>? {
+        if (token == null || token == "") {
+            println("Token invalido desde: **** getAllRepartidor ****")
+            return null
+        }
+
         println("Esta es la url que se manda: $urlApiBase_/$endPointStr")
         return withContext(Dispatchers.IO) {
             val request = Request.Builder()
                 .url("$urlApiBase_/$endPointStr")
+                .addHeader("token", token)
                 .build()
 
             try {
@@ -67,11 +83,17 @@ class HttpRequests {
         }
     }
 
-    suspend fun getUser(endPointStr: String): User? {
-        println("Esta es la url que se manda: $urlApiBase_/$endPointStr")
+    suspend fun getUser(employeeId: String, token: String?): User? {
+        if (token == null || token == "") {
+            println("Token invalido desde: **** getUser ****")
+            return null
+        }
+
+        println("Esta es la url que se manda: $urlApiBase_/empleados/$employeeId")
         return withContext(Dispatchers.IO) {
             val request = Request.Builder()
-                .url("$urlApiBase_/$endPointStr")
+                .url("$urlApiBase_/empleados/$employeeId")
+                .addHeader("token", token)
                 .build()
 
             try {
@@ -101,7 +123,7 @@ class HttpRequests {
         return withContext(Dispatchers.IO) {
             val request = Request.Builder()
                 .url("$urlApiBase_/auth/log_in/")
-                .addHeader("user", user)
+                .addHeader("usuario", user)
                 .addHeader("pass", pass)
                 .build()
 
@@ -109,6 +131,7 @@ class HttpRequests {
                 val response: Response = client.newCall(request).execute()
                 if (response.isSuccessful) {
                     val responseBody = response.body?.string()
+                    println("Esta es la respuesta: $responseBody")
                     responseBody?.let {
                         // Parsear el JSON a ApiResponse
                         gson.fromJson(it, AuthData::class.java)
@@ -126,7 +149,6 @@ class HttpRequests {
             }
         }
     }
-
     suspend fun validateToken(token: String?): AuthData? {
         if (token == null || token == "") {
             return null
@@ -156,6 +178,44 @@ class HttpRequests {
                 println("Exception: ${e.localizedMessage}")
                 println("Exception: ${e.stackTrace}")
                 println("Exception: ${e.toString()}")
+                null
+            }
+        }
+    }
+    suspend fun logOut(token: String?): Boolean? {
+        println("Logout Token: $token")
+        if (token == null || token == "") {
+            return null
+        }
+
+        val jsonBody = """
+            {
+                "token": "$token"
+            }
+        """
+
+        val requestBody = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
+        println("Esta es la url que se manda: $urlApiBase_/auth/log_out/")
+        val request = Request.Builder()
+            .url("$urlApiBase_/auth/log_out/")
+            .addHeader("token", token)
+            .post(requestBody) // Método POST
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    println("Logout exitoso: ${response.body?.string()}")
+                    true // Retorna el cuerpo de la respuesta
+                } else {
+                    println("Error: ${response.code}")
+                    println("Error: ${response.message}")
+                    println("Error: ${response.body?.string()}")
+                    null
+                }
+            } catch (e: Exception) {
+                println("Excepcion: ${e.message}")
                 null
             }
         }

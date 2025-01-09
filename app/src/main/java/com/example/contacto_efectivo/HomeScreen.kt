@@ -20,6 +20,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
@@ -61,11 +63,18 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
 @Composable
-fun HomeScreen(navController: NavController, deliveryMan: String, viewModel: OperationsViewModel) {
+fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
     val showDialog = remember { mutableStateOf(false) }
     val opIdDialog = remember { mutableStateOf(false) }
     val optMenu = remember { mutableStateOf("") }
     val activity = (LocalContext.current as? Activity)
+    val userManager = UserManager(LocalContext.current)
+    val userName = userManager.getName()
+    var deliveryMan by remember { mutableStateOf("") }
+
+    if (userName != null) {
+        deliveryMan = userName
+    }
     
     BackHandler {
         showDialog.value = true
@@ -143,6 +152,13 @@ fun HomeScreen(navController: NavController, deliveryMan: String, viewModel: Ope
                         color = Color(0xFF213E85)
                     )
                 }
+                Box(
+                    modifier = Modifier
+                        .weight(0.4f)
+                        .fillMaxHeight()
+                ) {
+                    AccountMenu(navController, viewModel)
+                }
             }
         }
 
@@ -167,8 +183,6 @@ fun HomeScreen(navController: NavController, deliveryMan: String, viewModel: Ope
             }
         )
     }
-
-
 }
 
 @Composable
@@ -232,10 +246,11 @@ fun ScrollableList(viewModel: OperationsViewModel) {
     val operations = remember { mutableStateOf(listOf<OperationApiResponse>()) }
     val getData = remember { mutableStateOf(true) }  // Seteamos en true para que dispare la llamada al API
     val httpRequests = HttpRequests()
+    val tokenManager = TokenManager(context)
 
     if (getData.value) {
         LaunchedEffect(Unit) {
-            val apiResponse = httpRequests.getAllRepartidor("operacion/${viewModel.repartidorId.value}/repartidor/")
+            val apiResponse = httpRequests.getAllRepartidor("operacion/${tokenManager.getUserId()}/repartidor/", tokenManager.getToken())
             getData.value = false
             apiResponse?.let {
                 // Actualiza la lista con los resultados de la API
@@ -315,6 +330,56 @@ fun ListItem(item: OperationApiResponse) {
     }
 }
 
+@Composable
+fun AccountMenu(navController: NavController, viewModel: OperationsViewModel) {
+    var expanded by remember { mutableStateOf(false) }
+    val logout = remember { mutableStateOf(false) }
+    val userManager = UserManager(LocalContext.current)
+    val tokenManager = TokenManager(LocalContext.current)
+    val httpRequests = HttpRequests()
+
+    if (logout.value) {
+        LaunchedEffect(logout.value) {
+            val logoutResponse = httpRequests.logOut(tokenManager.getToken())
+            if (logoutResponse != null) {
+                viewModel.tipoOperacion.value = null
+                viewModel.repartidorId.value = null
+                tokenManager.clearToken()
+                userManager.clearUser()
+                navController.navigate("login")
+            }
+            logout.value = false
+        }
+    }
+
+
+    Button(
+        onClick = {
+            viewModel.tipoOperacion.value = null
+            expanded = !expanded
+        },
+        shape = RoundedCornerShape(13.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+        modifier = Modifier
+            .fillMaxHeight()
+            .wrapContentSize(unbounded = true)
+    ) {
+        Icon(
+            imageVector = Icons.Default.AccountBox,
+            contentDescription = "Cuenta",
+            tint = Color(0xFF213E85)
+        )
+    }
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenuItem(
+            text = {
+                Text(text = stringResource(id = R.string.opt_logout))
+            },
+            onClick = { logout.value = true }
+        )
+    }
+}
+
 private fun actualizarLista(context: Context) {
     Toast.makeText(context, "Actualizacion Exitosa!", Toast.LENGTH_SHORT).show()
 }
@@ -325,7 +390,6 @@ fun HomePreview() {
     Contacto_efectivoTheme {
         HomeScreen(
             navController = rememberNavController(),
-            deliveryMan = stringResource(id = R.string.delivery_man),
             viewModel = OperationsViewModel()
         )
     }

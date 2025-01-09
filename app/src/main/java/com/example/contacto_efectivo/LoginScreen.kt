@@ -178,9 +178,17 @@ private fun accesoPermitido(context: Context, user: String, password: String, vi
 
             withContext(Dispatchers.Main) {
                 if (apiResponse != null) {
-                    viewModel.repartidorId.value = apiResponse.id
+                    viewModel.repartidorId.value = apiResponse.user_id.toInt()
                     tokenManager.saveToken(apiResponse)
+
+                    val userData = httpRequests.getUser(apiResponse.user_id, apiResponse.token)
+                    if (userData != null) {
+                        val userManager = UserManager(context)
+                        userManager.saveUser(userData)
+                    }
+
                     navToHome()
+
                 } else {
                     Toast.makeText(context, "Ingresa credenciales validas", Toast.LENGTH_SHORT).show()
                     viewModel.repartidorId.value = null

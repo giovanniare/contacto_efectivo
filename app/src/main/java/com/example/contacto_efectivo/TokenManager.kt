@@ -33,3 +33,28 @@ class TokenManager(context: Context) {
         preferences.edit().remove("created").apply()
     }
 }
+
+class UserManager(context: Context) {
+    private val preferences: SharedPreferences =
+        context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
+    fun saveUser(data: User) {
+        preferences.edit().putInt("uId", data.id).apply()
+        preferences.edit().putString("nombre", data.nombre).apply()
+        preferences.edit().putString("user_name", data.usuario_nombre).apply()
+    }
+
+    fun getName(): String? {
+        return preferences.getString("nombre", null)
+    }
+
+    fun getId(): Int {
+        return preferences.getInt("uId", 0)
+    }
+
+    fun clearUser() {
+        preferences.edit().remove("uId").apply()
+        preferences.edit().remove("nombre").apply()
+        preferences.edit().remove("user_name").apply()
+    }
+}
