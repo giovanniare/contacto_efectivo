@@ -1,5 +1,6 @@
 package com.example.contacto_efectivo
 
+import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 
@@ -15,6 +16,9 @@ class OperationsViewModel: ViewModel() {
     var tipoOperacion = mutableStateOf<String?>(null)
     var dataFromSelectedItem = mutableStateOf<Boolean?>(null)
     var operationSelected:OperationApiResponse? = null
+    var imageName = mutableStateOf<String?>(null)
+    var imageCompressed = mutableStateOf<String?>(null)
+    var imageUri = mutableStateOf<Uri?>(null)
 
     val agendada = listOf("en ruta", "cancelada", "entregada")
     val enRuta = listOf("efectiva", "transferencia", "reagendada", "cancelada", "entregada")

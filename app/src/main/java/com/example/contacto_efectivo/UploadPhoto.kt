@@ -32,7 +32,7 @@ fun UploadPhotoScreen() {
     ) { uri: Uri? ->
         uri?.let {
             val imagePath = getRealPathFromURI(context, it)
-            uploadImage(context, imagePath) // Sube la imagen seleccionada
+            uploadImage(context, imagePath, uri, OperationsViewModel()) // Sube la imagen seleccionada
         } ?: run {
             Toast.makeText(context, "Error al seleccionar la imagen", Toast.LENGTH_SHORT).show()
         }
@@ -73,10 +73,21 @@ fun getRealPathFromURI(context: Context, uri: Uri): String? {
     return result
 }
 
-fun uploadImage(context: Context, imagePath: String?) {
+fun uploadImage(context: Context, imagePath: String?, imageUri: Uri?, viewModel: OperationsViewModel) {
     // Verifica que el imagePath no sea nulo
     if (imagePath != null) {
+        imageUri?.let{
+            val compressedImage = ImageCompressor.compressImage(context, it)
+            if(compressedImage != null){
+                viewModel.imageCompressed.value = byteArrayToBase64(compressedImage)
+                println("Image path: $imagePath")
+                println("Image compressed: ${compressedImage.size}")
+            } else{
+                Toast.makeText(context, "ERROR AL SUBIR EVIDENCIA", Toast.LENGTH_LONG).show()
+            }
+        }
         // Lógica para subir la imagen seleccionada
+        println("ESta madre se llama desde la galeria")
         Toast.makeText(context, "Subiendo imagen desde: $imagePath", Toast.LENGTH_SHORT).show()
     } else {
         Toast.makeText(context, "Error al seleccionar la imagen", Toast.LENGTH_SHORT).show()

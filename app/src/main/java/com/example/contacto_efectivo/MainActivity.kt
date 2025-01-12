@@ -137,7 +137,7 @@ fun MyApp() {
             )
         }
         composable("photo_screen") {
-            CameraCaptureScreen(navController)
+            CameraCaptureScreen(navController, viewModel)
         }
         composable("preview/{imagePath}") { backStackEntry ->
             val context = LocalContext.current
@@ -160,10 +160,11 @@ fun MyApp() {
 
                 // Mostrar la pantalla de vista previa
                 cameraProviderState.value?.let { cameraProvider ->
+
                     PreviewScreen(
                         imageBitmap = bitmap,
                         imagePath = imagePath,
-                        onUpload = { uploadImage(context, imagePath) }, // Sube la imagen usando el path
+                        onUpload = { uploadImage(context, imagePath, viewModel.imageUri.value, viewModel) }, // Sube la imagen usando el path
                         onRetry = { navController.popBackStack() }, // Vuelve a la cámara
                         onCancel = {
                             // Cierra el proceso y libera los recursos de la cámara

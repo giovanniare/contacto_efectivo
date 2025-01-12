@@ -62,7 +62,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult as rememberLa
 private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit, viewModel: OperationsViewModel) {
     var count by remember { mutableIntStateOf(0) }
     val opIdDialog = remember { mutableStateOf(false) }
-    val tokenManager = TokenManager(context = LocalContext.current)
+    val context = LocalContext.current
+    val tokenManager = TokenManager(context)
     val token = tokenManager.getToken()
 
     Column(
@@ -100,7 +101,7 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
 
             )
         }
-        Row(modifier = Modifier.padding(bottom = 16.dp, top = 16.dp)){
+        Row(modifier = Modifier.padding(top = 16.dp)){
             Text(
                 text = "Adjunta evidencia",
                 fontSize = 19.sp,
@@ -123,12 +124,25 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
                 )
             }
         }
+        if (viewModel.imageName.value != null && viewModel.imageCompressed.value != null) {
+            Text(
+                text = "${viewModel.imageName.value}",
+                fontSize = 7.sp,
+                color = Color(0xFF213E85),
+                modifier = Modifier
+                    .padding(top = 0.3.dp)
+            )
+        }
         if (count > 0) {
             Button(
                 onClick = {
-                    viewModel.thirdOperationInCourse.value = true
-                    sendUpdate(viewModel, recibidos = count, token = token)
-                    onNavigateToHome() },
+                    if (viewModel.imageName.value != null) {
+                        viewModel.thirdOperationInCourse.value = true
+                        sendUpdate(viewModel, recibidos = count, token = token)
+                        onNavigateToHome()
+                    } else {
+                        Toast.makeText(context, "Sube una imagen de evidencia para continuar", Toast.LENGTH_LONG).show()
+                    }},
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
                 shape = RoundedCornerShape(13.dp),
                 modifier = Modifier
@@ -160,7 +174,7 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
     if (opIdDialog.value) {
         TomarEvidencia(
             operationDialog = opIdDialog,
-            onNavigateToGallery = { /* Aquí va la lógica al presionar el botón */ },
+            viewModel,
             onPhotoScreen = {
                 viewModel.keepData.value = true
                 onNavigateToPhoto() }
@@ -173,7 +187,8 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
     var entregados by remember { mutableIntStateOf(0) }
     var devoluciones by remember { mutableIntStateOf(0) }
     val opIdDialog = remember { mutableStateOf(false) }
-    val tokenManager = TokenManager(LocalContext.current)
+    val context = LocalContext.current
+    val tokenManager = TokenManager(context)
     val token = tokenManager.getToken()
 
     Column(
@@ -241,7 +256,7 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
 
             )
         }
-        Row(modifier = Modifier.padding(bottom = 16.dp, top = 16.dp)){
+        Row(modifier = Modifier.padding(top = 16.dp)){
             Text(
                 text = "Adjunta evidencia",
                 fontSize = 19.sp,
@@ -264,14 +279,27 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
                 )
             }
         }
+        if (viewModel.imageName.value != null && viewModel.imageCompressed.value != null) {
+            Text(
+                text = "${viewModel.imageName.value}",
+                fontSize = 7.sp,
+                color = Color(0xFF213E85),
+                modifier = Modifier
+                    .padding(top = 0.3.dp)
+            )
+        }
         if (entregados > 0 && devoluciones >= 0) {
             Button(
                 onClick = {
                     viewModel.thirdOperationInCourse.value = false
-                    sendUpdate(viewModel, end = true, entregados = entregados, devoluciones = devoluciones, token =  token)
-                    entregados = 0
-                    devoluciones = 0
-                    onNavigateToHome() },
+                    if (viewModel.imageName.value != null) {
+                        sendUpdate(viewModel, end = true, entregados = entregados, devoluciones = devoluciones, token =  token)
+                        entregados = 0
+                        devoluciones = 0
+                        onNavigateToHome()
+                    } else {
+                        Toast.makeText(context, "Sube una imagen de evidencia para continuar", Toast.LENGTH_LONG).show()
+                    }},
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
                 shape = RoundedCornerShape(13.dp),
                 modifier = Modifier
@@ -303,7 +331,7 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
     if (opIdDialog.value) {
         TomarEvidencia(
             operationDialog = opIdDialog,
-            onNavigateToGallery = { /* Aquí va la lógica al presionar el botón */ },
+            viewModel,
             onPhotoScreen = {
                 viewModel.keepData.value = true
                 onNavigateToPhoto() }
@@ -316,15 +344,11 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf("Iniciar/Finalizar") }
 
-    selectedItem = if (viewModel.thirdOperationInCourse.value == true) {
-        "Finalizar ruta"
-    } else {
-        "Iniciar ruta"
-    }
-
-
     BackHandler {
         viewModel.tipoOperacion.value = null
+        viewModel.imageName.value = null
+        viewModel.imageCompressed.value = null
+        viewModel.imageUri.value = null
         navController.navigate("home_screen")
     }
 
@@ -373,6 +397,12 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
         canUpdateStatus.value = true
         println("SE puede actualizar: ${operationStatus.value}")
         println("Data: ${parsedData}")
+    }
+
+    selectedItem = if (viewModel.thirdOperationInCourse.value == true || operationStatus.value == "en ruta") {
+        "Finalizar ruta"
+    } else {
+        "Iniciar ruta"
     }
 
     LaunchedEffect(operationStatus.value) {
@@ -493,10 +523,12 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                         if (parsedData != null) {
                             StartRoute(
                                 {
+                                    viewModel.imageName.value = null
+                                    viewModel.imageCompressed.value = null
+                                    viewModel.imageUri.value = null
                                     navController.navigate("home_screen") {
-                                        launchSingleTop = true // Evita duplicados en la pila
-                                        restoreState = false   // Ignora el estado guardado
                                         popUpTo("home_screen") { inclusive = true }
+                                        popUpTo("consult_screen") { inclusive = true }
                                     }
                                 }, {
                                 viewModel.keepData.value = true
@@ -508,10 +540,15 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                         if (parsedData != null) {
                             EndRoute(
                                 {
+                                    viewModel.imageName.value = null
+                                    viewModel.imageCompressed.value = null
+                                    viewModel.imageUri.value = null
                                     navController.navigate("home_screen") {
+                                        popUpTo("home_screen") { inclusive = true }
+                                        popUpTo("consult_screen") { inclusive = true }
                                         launchSingleTop = true // Evita duplicados en la pila
                                         restoreState = false   // Ignora el estado guardado
-                                        popUpTo("home_screen") { inclusive = true }
+
                                     }
                                 }, {
                                 viewModel.keepData.value = true
@@ -559,9 +596,11 @@ private fun sendUpdate(viewModel: OperationsViewModel, recibidos: Int = 0, entre
         if (end) {
             opData.entregas = entregados
             opData.devoluciones = devoluciones
+            opData.imagen = viewModel.imageCompressed.value
             opData.status = "entregada"
         } else {
             opData.cantidad = recibidos
+            opData.imagen = viewModel.imageCompressed.value
             opData.status = "en ruta"
         }
 

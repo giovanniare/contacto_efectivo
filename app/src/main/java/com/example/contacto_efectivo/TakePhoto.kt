@@ -3,8 +3,10 @@ package com.example.contacto_efectivo
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Environment
+import android.util.Base64
 import android.util.Log
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -26,19 +28,22 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.max
 
 @Composable
-fun CameraCaptureScreen(navController: NavController) {
+fun CameraCaptureScreen(navController: NavController, viewModel: OperationsViewModel) {
     val context = LocalContext.current
     val previewView = remember { PreviewView(context) }
     val imageCapture = remember { mutableStateOf<ImageCapture?>(null) }
     val showPreview = remember { mutableStateOf(false) }
     val imageBitmap = remember { mutableStateOf<Bitmap?>(null) }
     val imagePath = remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
     val cameraProviderState = remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
     // Configurar cámara y obtener el cameraProvider
@@ -58,7 +63,7 @@ fun CameraCaptureScreen(navController: NavController) {
                 imageBitmap = imageBitmap.value,
                 imagePath = imagePath.value,
                 onUpload = {
-                    uploadImage(context, imagePath.value)
+                    uploadImage(context, imagePath.value, imageUri, viewModel)
                     cameraProvider.unbindAll() // Liberar recursos al subir la imagen
                     navController.popBackStack()
                 },
@@ -90,6 +95,7 @@ fun CameraCaptureScreen(navController: NavController) {
             Button(
                 onClick = {
                     val photoFile = createFile(context)
+                    viewModel.imageName.value = photoFile.name
                     val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
                     imageCapture.value?.takePicture(
@@ -101,6 +107,7 @@ fun CameraCaptureScreen(navController: NavController) {
                                 // Obtener el bitmap de la imagen capturada
                                 imageBitmap.value = BitmapFactory.decodeFile(photoFile.absolutePath)
                                 imagePath.value = photoFile.absolutePath // Guardar el path
+                                imageUri = savedUri // Guardar la URI
                                 showPreview.value = true // Mostrar la vista previa
                             }
 
@@ -129,13 +136,22 @@ fun CameraCaptureScreen(navController: NavController) {
 private fun createFile(context: Context): File {
     val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
     val storageDir: File? = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-    return File.createTempFile("JPEG_$timeStamp", ".jpg", storageDir)
+    return File.createTempFile("JPEG_$timeStamp", ".jpeg", storageDir)
 }
 
 // Función para subir la imagen
-fun uploadImage(context: Context, imagePath: String) {
-    // Lógica para subir la imagen
+fun uploadImage(context: Context, imagePath: String, imageUri: Uri?, viewModel: OperationsViewModel) {
     Toast.makeText(context, "Subiendo imagen desde: $imagePath", Toast.LENGTH_SHORT).show()
+    imageUri?.let{
+        val compressedImage = ImageCompressor.compressImage(context, it)
+        if(compressedImage != null){
+            viewModel.imageCompressed.value = byteArrayToBase64(compressedImage)
+            println("Image path: $imagePath")
+            println("Image compressed: ${compressedImage.size}")
+        } else{
+            Toast.makeText(context, "ERROR AL SUBIR EVIDENCIA", Toast.LENGTH_LONG).show()
+        }
+    }
 }
 
 @Composable
@@ -218,4 +234,60 @@ private fun setupCamera(
     } catch (exc: Exception) {
         Log.e("CameraXApp", "Error al vincular casos de uso", exc)
     }
+}
+
+object ImageCompressor {
+
+    fun compressImage(context: Context, imageUri: Uri, maxSize: Int = 500): ByteArray? {
+        val originalBitmap = uriToBitmap(context, imageUri) ?: return null
+
+        val resizedBitmap = resizeBitmap(originalBitmap, maxSize)
+
+        val compressedByteArray = compressBitmapToByteArray(resizedBitmap, quality = 50)
+
+        return compressedByteArray
+    }
+
+    private fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            BitmapFactory.decodeStream(inputStream)
+        }catch (e: Exception){
+            Log.e("ImageCompressor", "Error decoding bitmap", e)
+            null
+        }
+    }
+
+    private fun resizeBitmap(bitmap: Bitmap, maxSize: Int): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        val scaleFactor = max(width, height).toFloat() / maxSize.toFloat()
+        if(scaleFactor <= 1){
+            return bitmap
+        }
+
+        val matrix = Matrix()
+        matrix.postScale(1/scaleFactor, 1/scaleFactor)
+
+        return Bitmap.createBitmap(
+            bitmap,
+            0,
+            0,
+            width,
+            height,
+            matrix,
+            true
+        )
+
+    }
+
+    private fun compressBitmapToByteArray(bitmap: Bitmap, quality: Int): ByteArray {
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream)
+        return stream.toByteArray()
+    }
+}
+
+fun byteArrayToBase64(byteArray: ByteArray): String {
+    return Base64.encodeToString(byteArray, Base64.DEFAULT)
 }

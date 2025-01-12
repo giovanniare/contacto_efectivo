@@ -366,7 +366,10 @@ fun ListItem(item: OperationApiResponse, operationMap: MutableMap<String?, Opera
                     viewModel.tipoOperacion.value = operationMap[codigo]?.id_tipo_operacion
                     println("operacion: ${viewModel.operationSelected}")
                     val screen = if (item.id_tipo_operacion == "terceros") "third_screen" else "update_screen"
-                    navController.navigate(screen)
+                    navController.navigate(screen) {
+                        popUpTo("home_screen") { inclusive = true }
+                        popUpTo(screen) { inclusive = true }
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
                 shape = RoundedCornerShape(13.dp),

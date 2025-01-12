@@ -1,5 +1,7 @@
 package com.example.contacto_efectivo
 
+import android.content.Context
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -50,6 +52,9 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
 
     BackHandler {
         viewModel.tipoOperacion.value = null
+        viewModel.imageName.value = null
+        viewModel.imageCompressed.value = null
+        viewModel.imageUri.value = null
         navController.navigate("home_screen")
     }
 
@@ -171,8 +176,7 @@ fun Options(
     var nextOptions by remember { mutableStateOf(listOf("")) }
     var nextStatus = remember { mutableStateOf("") }
     val opIdDialog = remember { mutableStateOf(false) }
-    val tokenManager = TokenManager(LocalContext.current)
-    val token = tokenManager.getToken()
+    val context = LocalContext.current
 
     if (nextStatus.value == "" && operationStatus.value != "Sin estado") {
         nextStatus.value = operationStatus.value
@@ -259,7 +263,7 @@ fun Options(
 
     // Verifica si operationStatus.value está en la lista de estados que necesitan evidencia
     if (nextStatus.value in viewModel.necesitaEvidencia) {
-        Row(modifier = Modifier.padding(bottom = 16.dp, top = 16.dp)){
+        Row(modifier = Modifier.padding(top = 16.dp)){
             Text(
                 text = "Adjunta evidencia",
                 fontSize = 19.sp,
@@ -282,13 +286,22 @@ fun Options(
                 )
             }
         }
+        if (viewModel.imageName.value != null && viewModel.imageCompressed.value != null) {
+            Text(
+                text = "${viewModel.imageName.value}",
+                fontSize = 7.sp,
+                color = Color(0xFF213E85),
+                modifier = Modifier
+                    .padding(top = 0.3.dp)
+            )
+        }
         Text(
             text = "Comentarios Adicionales",
             fontSize = 17.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF213E85),
             modifier = Modifier
-                .padding(top = 26.dp)
+                .padding(top = 36.dp)
         )
         TextField(
             value = comments,
@@ -319,7 +332,7 @@ fun Options(
         if (opIdDialog.value) {
             TomarEvidencia(
                 operationDialog = opIdDialog,
-                onNavigateToGallery = { /* Aquí va la lógica al presionar el botón */ },
+                viewModel,
                 onPhotoScreen = {
                     if (operationData != null) {
                         viewModel.keepData.value = true
@@ -340,10 +353,21 @@ fun Options(
     ) {
         Button(
             onClick = {
+                operationData?.imagen = viewModel.imageCompressed.value
+                println("Imagen bytearray: ${viewModel.imageCompressed.value}")
+                viewModel.imageName.value = null
+                viewModel.imageCompressed.value = null
+                viewModel.imageUri.value = null
                 if (operationData != null) {
                     operationData.status = nextStatus.value
                     var codigo= operationData.codigo.toString()
-                    sendUpdate(navController, operationData, codigo, token = token)
+                    sendUpdate({
+                        navController.navigate("home_screen") {
+                            launchSingleTop = true // Evita duplicados en la pila
+                            restoreState = false   // Ignora el estado guardado
+                            popUpTo("home_screen") { inclusive = true }
+                        }
+                    }, operationData, codigo, context)
                 } else {
                     //
                 }
@@ -364,7 +388,15 @@ fun Options(
             )
         }
         Button(
-            onClick = { navController.navigate("home_screen") },
+            onClick = {
+                viewModel.imageName.value = null
+                viewModel.imageCompressed.value = null
+                viewModel.imageUri.value = null
+                navController.navigate("home_screen") {
+                    launchSingleTop = true // Evita duplicados en la pila
+                    restoreState = false   // Ignora el estado guardado
+                    popUpTo("home_screen") { inclusive = true }
+                } },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
             shape = RoundedCornerShape(13.dp),
             modifier = Modifier
@@ -384,17 +416,33 @@ fun Options(
 
 
 private fun sendUpdate(
-    navController: NavController,
+    onNavigateToHome: () -> Unit,
     operationData: OperationApiResponse?,
     codigo: String,
-    token: String?
+    context: Context
 ) {
     if (operationData != null) {
-        updateOperationStatus(codigo, operationData, token)
-    }
-    navController.navigate("home_screen") {
-        launchSingleTop = true // Evita duplicados en la pila
-        restoreState = false   // Ignora el estado guardado
-        popUpTo("home_screen") { inclusive = true }
+
+        val viewModel = OperationsViewModel()
+        var canUpdate = false
+
+        if (viewModel.necesitaEvidencia.contains(operationData.status) && operationData.imagen != null) {
+            canUpdate = true
+        } else if (!viewModel.necesitaEvidencia.contains(operationData.status)) {
+            canUpdate = true
+        } else {
+            canUpdate = false
+        }
+
+        if (canUpdate) {
+            val tokenManager = TokenManager(context)
+            updateOperationStatus(codigo, operationData, tokenManager.getToken())
+
+            onNavigateToHome()
+
+        } else {
+            Toast.makeText(context, "Sube una imagen de evidencia para continuar", Toast.LENGTH_LONG).show()
+        }
+
     }
 }

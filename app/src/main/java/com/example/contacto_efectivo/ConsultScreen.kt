@@ -40,7 +40,10 @@ import androidx.navigation.NavController
 @Composable
 fun ConsultScreen(navController: NavController, viewModel: OperationsViewModel) {
     BackHandler {
-        navController.navigate("home_screen")
+        navController.navigate("home_screen") {
+            popUpTo("home_screen") { inclusive = true }
+            popUpTo("consult_screen") { inclusive = true }
+        }
     }
     val opIdDialog = remember { mutableStateOf(true) }
     val success = remember { mutableStateOf(false) }
