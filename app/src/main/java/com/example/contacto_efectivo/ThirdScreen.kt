@@ -343,6 +343,8 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
 fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf("Iniciar/Finalizar") }
+    val tokenManager = TokenManager(LocalContext.current)
+    val repartidorId = tokenManager.getUserId()?.toInt()
 
     BackHandler {
         viewModel.tipoOperacion.value = null
@@ -440,7 +442,7 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF213E85)
                         )
-                    } else if(viewModel.repartidorId.value != parsedData.repartidor) {
+                    } else if(repartidorId != parsedData.repartidor) {
                         selectedItem = "No repartidor match"
                     }else {
                         Text(

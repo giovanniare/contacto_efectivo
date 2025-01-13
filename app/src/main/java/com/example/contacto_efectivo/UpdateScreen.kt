@@ -64,6 +64,8 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
     val operationData = remember { mutableStateOf<OperationApiResponse?>(null) }
     var canUpdateStatus = remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val tokenManager = TokenManager(LocalContext.current)
+    val repartidorId = tokenManager.getUserId()?.toInt()
 
     viewModel.onBackfromScanScreen.value = "update_screen"
 
@@ -136,7 +138,7 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF213E85)
                     )
-                } else if(viewModel.repartidorId.value != parsedData.repartidor) {
+                } else if(repartidorId != parsedData.repartidor) {
                     Text(
                         text = "Esta operacion esta asignada a otro repartidor. Comunicate con tu analizta.",
                         fontSize = 17.sp,
