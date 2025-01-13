@@ -602,7 +602,7 @@ private fun sendUpdate(viewModel: OperationsViewModel, recibidos: Int = 0, entre
             opData.status = "entregada"
         } else {
             opData.cantidad = recibidos
-            opData.imagen_opcional = viewModel.imageCompressed.value
+            opData.imagen = viewModel.imageCompressed.value
             opData.status = "en ruta"
         }
 

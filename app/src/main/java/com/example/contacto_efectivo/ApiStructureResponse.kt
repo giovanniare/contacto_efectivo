@@ -28,8 +28,9 @@ data class OperationApiResponse(
     val codigo_postal: Int,
     var imagen: String?,
     var imagen_opcional: String?,
-    var municipio_nombre: String?,
+    var municipio_nombre: String,
     var monicipio_id: Int?,
+    var inventario_relacion: String?
 )
 
 // Función para convertir el JSON a un objeto Operacion
