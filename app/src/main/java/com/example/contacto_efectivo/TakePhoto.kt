@@ -243,7 +243,7 @@ object ImageCompressor {
 
         val resizedBitmap = resizeBitmap(originalBitmap, maxSize)
 
-        val compressedByteArray = compressBitmapToByteArray(resizedBitmap, quality = 50)
+        val compressedByteArray = compressBitmapToByteArray(resizedBitmap, quality = 70)
 
         return compressedByteArray
     }

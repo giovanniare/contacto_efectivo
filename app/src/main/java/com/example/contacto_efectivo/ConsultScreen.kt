@@ -40,7 +40,9 @@ import androidx.navigation.NavController
 @Composable
 fun ConsultScreen(navController: NavController, viewModel: OperationsViewModel) {
     BackHandler {
+        viewModel.getData.value = true
         navController.navigate("home_screen") {
+
             popUpTo("home_screen") { inclusive = true }
             popUpTo("consult_screen") { inclusive = true }
         }
@@ -71,7 +73,7 @@ fun ConsultScreen(navController: NavController, viewModel: OperationsViewModel) 
             .fillMaxSize()
             .background(Color.White)
     ) {
-        Banner()
+        Banner(navController, viewModel)
         TitleText(title = "Consulta de estatus")
         Column(
             modifier = Modifier

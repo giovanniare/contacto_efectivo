@@ -55,6 +55,7 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
         viewModel.imageName.value = null
         viewModel.imageCompressed.value = null
         viewModel.imageUri.value = null
+        viewModel.getData.value = true
         navController.navigate("home_screen")
     }
 
@@ -115,7 +116,7 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
             .fillMaxSize()
             .background(Color.White)
     ) {
-        Banner()
+        Banner(navController, viewModel)
         TitleText(title = "Actualizacion de estatus")
         Column(
             modifier = Modifier
@@ -192,8 +193,9 @@ fun Options(
     when (operationStatus.value) {
         "creada" -> nextOptions = viewModel.agendada
         "agendada" -> nextOptions = viewModel.agendada
+        "asignada" -> nextOptions = viewModel.agendada
         "en ruta" -> nextOptions = viewModel.enRuta
-        "efectiva" -> nextOptions = viewModel.efectiva
+        //"efectiva" -> nextOptions = viewModel.efectiva
         "transferencia" -> nextOptions = viewModel.transferecia
         else -> {
             canUpdateStatus.value = false
@@ -363,12 +365,15 @@ fun Options(
                 if (operationData != null) {
                     operationData.status = nextStatus.value
                     var codigo= operationData.codigo.toString()
+                    viewModel.operationSelected = null
+                    viewModel.getData.value = true
                     sendUpdate({
                         navController.navigate("home_screen") {
                             launchSingleTop = true // Evita duplicados en la pila
                             restoreState = false   // Ignora el estado guardado
                             popUpTo("home_screen") { inclusive = true }
                         }
+
                     }, operationData, codigo, context)
                 } else {
                     //
@@ -439,6 +444,7 @@ private fun sendUpdate(
         if (canUpdate) {
             val tokenManager = TokenManager(context)
             updateOperationStatus(codigo, operationData, tokenManager.getToken())
+            viewModel.getData.value = true
 
             onNavigateToHome()
 

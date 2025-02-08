@@ -5,12 +5,13 @@ import com.google.gson.Gson
 data class OperationApiResponse(
     val id: Int,
     val id_tipo_operacion: String,
-    val fecha_inicio: String,
     val codigo: String?,
     var status: String,
     val direccion_inicio: String,
     val direccion_final: String,
+    val codigo_postal: Int,
     val tarifa: String,
+    val fecha_inicio: String,
     val fecha_final: String,
     var cantidad: Int,
     var comentario: String,
@@ -23,14 +24,15 @@ data class OperationApiResponse(
     val largo: Int,
     val ancho: Int,
     val alto: Int,
-    var entregas: Int,
     var devoluciones: Int,
-    val codigo_postal: Int,
+    var entregas: Int,
+    var inventario_relacion: String?,
     var imagen: String?,
     var imagen_opcional: String?,
-    var municipio_nombre: String,
     var monicipio_id: Int?,
-    var inventario_relacion: String?
+    var municipio_nombre: String,
+    var finalizada: Boolean?,
+    var pagado: Boolean?,
 )
 
 // Función para convertir el JSON a un objeto Operacion

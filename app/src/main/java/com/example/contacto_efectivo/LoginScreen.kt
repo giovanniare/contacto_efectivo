@@ -147,6 +147,7 @@ fun LogInScreen(onNavigateToHome: () -> Unit, viewModel: OperationsViewModel) {
             )
             Button(
                 onClick = {
+                    viewModel.getData.value = true
                     accesoPermitido(
                         context = context,
                         user = userName,

@@ -60,7 +60,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult as rememberLa
 @SuppressLint("ResourceAsColor")
 @Composable
 private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit, viewModel: OperationsViewModel) {
-    var count by remember { mutableIntStateOf(0) }
+    var count = viewModel.recibidos
     val opIdDialog = remember { mutableStateOf(false) }
     val context = LocalContext.current
     val tokenManager = TokenManager(context)
@@ -82,12 +82,12 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
                     .align(Alignment.CenterVertically)
             )
             TextField(
-                value = count.toString(),
-                onValueChange = {newValue ->  count = newValue.toIntOrNull() ?: 0 },
+                value = count.value,
+                onValueChange = {newValue ->  count.value = newValue },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(13.dp),
                 placeholder = { Text(
-                    text = count.toString(),
+                    text = count.value,
                     color = colorResource(id = R.color.gray_ratiio),
                     fontSize = 14.sp)
                 },
@@ -133,12 +133,19 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
                     .padding(top = 0.3.dp)
             )
         }
-        if (count > 0) {
+        if (count.value != "" && count.value != "0") {
             Button(
                 onClick = {
                     if (viewModel.imageName.value != null) {
                         viewModel.thirdOperationInCourse.value = true
-                        sendUpdate(viewModel, recibidos = count, token = token)
+                        sendUpdate(viewModel, recibidos = count.value, token = token)
+                        viewModel.getData.value = true
+                        viewModel.operationSelected = null
+                        viewModel.dataFromSelectedItem.value = null
+                        viewModel.keepData.value = false
+                        viewModel.operationScaneed = null
+                        viewModel.dataFromSelectedItem.value = null
+
                         onNavigateToHome()
                     } else {
                         Toast.makeText(context, "Sube una imagen de evidencia para continuar", Toast.LENGTH_LONG).show()
@@ -184,8 +191,8 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
 
 @Composable
 private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit, viewModel: OperationsViewModel) {
-    var entregados by remember { mutableIntStateOf(0) }
-    var devoluciones by remember { mutableIntStateOf(0) }
+    var entregados = viewModel.entregados
+    var devoluciones = viewModel.devoluciones
     val opIdDialog = remember { mutableStateOf(false) }
     val context = LocalContext.current
     val tokenManager = TokenManager(context)
@@ -207,12 +214,12 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
                     .align(Alignment.CenterVertically)
             )
             TextField(
-                value = entregados.toString(),
-                onValueChange = { newValue -> entregados = newValue.toIntOrNull() ?: 0 },
+                value = entregados.value,
+                onValueChange = { newValue -> entregados.value = newValue },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(13.dp),
                 placeholder = { Text(
-                    text = entregados.toString(),
+                    text = entregados.value,
                     color = colorResource(id = R.color.gray_ratiio),
                     fontSize = 14.sp)
                 },
@@ -237,12 +244,12 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
                     .align(Alignment.CenterVertically)
             )
             TextField(
-                value = devoluciones.toString(),
-                onValueChange = { newValue -> devoluciones = newValue.toIntOrNull() ?: 0 },
+                value = devoluciones.value,
+                onValueChange = { newValue -> devoluciones.value = newValue },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(13.dp),
                 placeholder = { Text(
-                    text = devoluciones.toString(),
+                    text = devoluciones.value,
                     color = colorResource(id = R.color.gray_ratiio),
                     fontSize = 14.sp)
                 },
@@ -288,14 +295,20 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
                     .padding(top = 0.3.dp)
             )
         }
-        if (entregados > 0 && devoluciones >= 0) {
+        if (entregados.value > "" && devoluciones.value >= "") {
             Button(
                 onClick = {
                     viewModel.thirdOperationInCourse.value = false
                     if (viewModel.imageName.value != null) {
-                        sendUpdate(viewModel, end = true, entregados = entregados, devoluciones = devoluciones, token =  token)
-                        entregados = 0
-                        devoluciones = 0
+                        sendUpdate(viewModel, end = true, entregados = entregados.value, devoluciones = devoluciones.value, token =  token)
+                        entregados.value = ""
+                        devoluciones.value = ""
+                        viewModel.getData.value = true
+                        viewModel.operationSelected = null
+                        viewModel.dataFromSelectedItem.value = null
+                        viewModel.keepData.value = false
+                        viewModel.operationScaneed = null
+                        viewModel.dataFromSelectedItem.value = null
                         onNavigateToHome()
                     } else {
                         Toast.makeText(context, "Sube una imagen de evidencia para continuar", Toast.LENGTH_LONG).show()
@@ -351,6 +364,10 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
         viewModel.imageName.value = null
         viewModel.imageCompressed.value = null
         viewModel.imageUri.value = null
+        viewModel.recibidos.value = ""
+        viewModel.entregados.value = ""
+        viewModel.devoluciones.value = ""
+        viewModel.getData.value = true
         navController.navigate("home_screen")
     }
 
@@ -417,7 +434,7 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
             .background(Color.White)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Banner()
+            Banner(navController, viewModel)
             TitleText(title = "Operaciones Terceros")
             Column(
                 modifier = Modifier
@@ -451,7 +468,7 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF213E85)
                         )
-                        CallButton(phoneNumber = parsedData.numero_referencia)
+                        //CallButton(phoneNumber = parsedData.numero_referencia)
 
 
                         Box(
@@ -529,8 +546,9 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                                     viewModel.imageCompressed.value = null
                                     viewModel.imageUri.value = null
                                     navController.navigate("home_screen") {
+                                        launchSingleTop = true // Evita duplicados en la pila
+                                        restoreState = false   // Ignora el estado guardado
                                         popUpTo("home_screen") { inclusive = true }
-                                        popUpTo("consult_screen") { inclusive = true }
                                     }
                                 }, {
                                 viewModel.keepData.value = true
@@ -546,11 +564,9 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
                                     viewModel.imageCompressed.value = null
                                     viewModel.imageUri.value = null
                                     navController.navigate("home_screen") {
-                                        popUpTo("home_screen") { inclusive = true }
-                                        popUpTo("consult_screen") { inclusive = true }
                                         launchSingleTop = true // Evita duplicados en la pila
                                         restoreState = false   // Ignora el estado guardado
-
+                                        popUpTo("home_screen") { inclusive = true }
                                     }
                                 }, {
                                 viewModel.keepData.value = true
@@ -590,18 +606,18 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
     }
 }
 
-private fun sendUpdate(viewModel: OperationsViewModel, recibidos: Int = 0, entregados: Int = 0, devoluciones: Int = 0, end: Boolean = false, token: String?) {
+private fun sendUpdate(viewModel: OperationsViewModel, recibidos: String = "0", entregados: String = "0", devoluciones: String = "0", end: Boolean = false, token: String?) {
     var opData = viewModel.operationScaneed
     var codigo = opData?.codigo
 
     if (opData != null && codigo != null) {
         if (end) {
-            opData.entregas = entregados
-            opData.devoluciones = devoluciones
-            opData.imagen = viewModel.imageCompressed.value
-            opData.status = "entregada"
+            opData.entregas = entregados.toInt()
+            opData.devoluciones = devoluciones.toInt()
+            opData.imagen_opcional = viewModel.imageCompressed.value
+            opData.status = "efectiva"
         } else {
-            opData.cantidad = recibidos
+            opData.cantidad = recibidos.toInt()
             opData.imagen = viewModel.imageCompressed.value
             opData.status = "en ruta"
         }
@@ -609,5 +625,9 @@ private fun sendUpdate(viewModel: OperationsViewModel, recibidos: Int = 0, entre
         updateOperationStatus(codigo, opData, token)
         viewModel.keepData.value = false
         viewModel.operationScaneed = null
+        viewModel.recibidos.value = ""
+        viewModel.entregados.value = ""
+        viewModel.devoluciones.value = ""
+        viewModel.getData.value = true
     }
 }

@@ -86,7 +86,7 @@ fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
             .background(Color.White)
             .fillMaxSize()
     ) {
-        Banner()
+        Banner(navController, viewModel)
         TitleText(title = "Bienvenido $deliveryMan")
         Column(
             verticalArrangement = Arrangement.Bottom,
@@ -151,13 +151,6 @@ fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
                         fontFamily = FontFamily(Font(R.font.inter_extrabold)),
                         color = Color(0xFF213E85)
                     )
-                }
-                Box(
-                    modifier = Modifier
-                        .weight(0.4f)
-                        .fillMaxHeight()
-                ) {
-                    AccountMenu(navController, viewModel)
                 }
             }
         }
@@ -244,7 +237,7 @@ fun ScrollableList(viewModel: OperationsViewModel, navController: NavController)
     // Usa 'remember' para mantener la lista entre recomposiciones
     val context = LocalContext.current
     val operations = remember { mutableStateOf(listOf<OperationApiResponse>()) }
-    val getData = remember { mutableStateOf(true) }  // Seteamos en true para que dispare la llamada al API
+    val getData = viewModel.getData
     val httpRequests = HttpRequests()
     val tokenManager = TokenManager(context)
 
@@ -256,12 +249,14 @@ fun ScrollableList(viewModel: OperationsViewModel, navController: NavController)
             viewModel.tipoOperacion.value = null
 
             val apiResponse = httpRequests.getAllRepartidor("operacion/${tokenManager.getUserId()}/repartidor/", tokenManager.getToken())
-            getData.value = false
             apiResponse?.let {
                 // Actualiza la lista con los resultados de la API
                 operations.value = it
+                getData.value = false
             }
+
         }
+
     }
 
     val filteredOperations = operations.value.filter { item -> item.status !in viewModel.noMoreActions }
@@ -357,7 +352,7 @@ fun ListItem(item: OperationApiResponse, operationMap: MutableMap<String?, Opera
                     color = Color.White
                 )
             }
-            Button(
+            /*Button(
                 onClick = {
                     println("Codigo: $codigo")
                     viewModel.operationSelected = operationMap[codigo]
@@ -381,58 +376,8 @@ fun ListItem(item: OperationApiResponse, operationMap: MutableMap<String?, Opera
                     text = "Mover",
                     color = Color.White
                 )
-            }
+            }*/
         }
-    }
-}
-
-@Composable
-fun AccountMenu(navController: NavController, viewModel: OperationsViewModel) {
-    var expanded by remember { mutableStateOf(false) }
-    val logout = remember { mutableStateOf(false) }
-    val userManager = UserManager(LocalContext.current)
-    val tokenManager = TokenManager(LocalContext.current)
-    val httpRequests = HttpRequests()
-
-    if (logout.value) {
-        LaunchedEffect(logout.value) {
-            val logoutResponse = httpRequests.logOut(tokenManager.getToken())
-            if (logoutResponse != null) {
-                viewModel.tipoOperacion.value = null
-                viewModel.repartidorId.value = null
-                tokenManager.clearToken()
-                userManager.clearUser()
-                navController.navigate("login")
-            }
-            logout.value = false
-        }
-    }
-
-
-    Button(
-        onClick = {
-            viewModel.tipoOperacion.value = null
-            expanded = !expanded
-        },
-        shape = RoundedCornerShape(13.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        modifier = Modifier
-            .fillMaxHeight()
-            .wrapContentSize(unbounded = true)
-    ) {
-        Icon(
-            imageVector = Icons.Default.AccountBox,
-            contentDescription = "Cuenta",
-            tint = Color(0xFF213E85)
-        )
-    }
-    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        DropdownMenuItem(
-            text = {
-                Text(text = stringResource(id = R.string.opt_logout))
-            },
-            onClick = { logout.value = true }
-        )
     }
 }
 

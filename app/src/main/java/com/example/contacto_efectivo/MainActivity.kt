@@ -83,7 +83,15 @@ fun MyApp() {
     val tokenManager = TokenManager(context = LocalContext.current)
     val token = tokenManager.getToken()
     val userManager = UserManager(context = LocalContext.current)
-    startScreen = if (token != null) "home_screen" else "login"
+    var permissionsGranted by remember { mutableStateOf(false) }
+
+    permissionsGranted = checkPermissions(LocalContext.current)
+
+    if (!permissionsGranted) {
+        startScreen = "permission_screen"
+    } else {
+        startScreen = if (token != null) "home_screen" else "login"
+    }
 
     LaunchedEffect(Unit) {
         val httpRequests = HttpRequests()
@@ -91,17 +99,24 @@ fun MyApp() {
         val validToken = httpRequests.validateToken(token)
         println("Valid Token: $validToken")
 
-        if (validToken != null) {
-            startScreen = "home_screen"
+        if (!permissionsGranted) {
+            startScreen = "permission_screen"
         } else {
-            startScreen = "login"
-            tokenManager.clearToken()
-            userManager.clearUser()
+            if (validToken != null) {
+                startScreen = "home_screen"
+            } else {
+                startScreen = "login"
+                tokenManager.clearToken()
+                userManager.clearUser()
+            }
         }
     }
 
     NavHost(navController = navController, startDestination = startScreen)
     {
+        composable("permission_screen") {
+            RequestPermissionsScreen(onNavigateToHome = { navController.navigate("login")})
+        }
         composable("login") {
             LogInScreen(onNavigateToHome = { navController.navigate("home_screen")}, viewModel)
         }
