@@ -13,7 +13,7 @@
     <string name="menu_sts">Estatus</string>
     <string name="opt_terceros">Terceros</string>
     <string name="opt_prod">Producto</string>
-    <string name="opt_clt">Cliente</string>
+    <string name="opt_clt">Internas</string>
     <string name="opt_logout">Log Out</string>
     <!--string name="default_user">Ingresa tu numbre de usuario</string>
     <string name="default_pass">Ingresa tu contraseña</string-->

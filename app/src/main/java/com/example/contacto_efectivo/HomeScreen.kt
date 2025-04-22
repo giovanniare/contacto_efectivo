@@ -2,7 +2,9 @@ package com.example.contacto_efectivo
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.media.session.MediaSession.Token
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -67,6 +69,7 @@ import kotlinx.coroutines.processNextEventInCurrentThread
 @Composable
 fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
     val showDialog = remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val activity = (LocalContext.current as? Activity)
     val userManager = UserManager(LocalContext.current)
     val userName = userManager.getName()
@@ -111,7 +114,17 @@ fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
                 }
 
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        val origin = "CDMX"
+                        val destination = "Guadalajara"
+                        val waypoints = listOf("Puebla", "Querétaro")
+                        val waypointsString = waypoints.joinToString("|") { it.replace(" ", "+") }
+                        val url = "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&waypoints=$waypointsString&travelmode=driving"
+
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                        intent.setPackage("com.google.android.apps.maps")
+                        context.startActivity(intent)
+                    },
                     shape = RoundedCornerShape(13.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     modifier = Modifier
@@ -248,7 +261,7 @@ fun ScrollableList(viewModel: OperationsViewModel, navController: NavController)
             viewModel.repartidorId.value = null
             viewModel.tipoOperacion.value = null
 
-            val apiResponse = httpRequests.getAllRepartidor("operacion/${tokenManager.getUserId()}/repartidor/", tokenManager.getToken())
+            val apiResponse = httpRequests.getAllRepartidor("operacion/repartidor/", tokenManager.getToken(), tokenManager.getUserId())
             apiResponse?.let {
                 // Actualiza la lista con los resultados de la API
                 operations.value = it
@@ -298,7 +311,7 @@ fun ScrollableList(viewModel: OperationsViewModel, navController: NavController)
                 .padding(top = 16.dp)
         ) {
             Text(
-                text = "Actualizar",
+                text = "Sincronizar",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -352,31 +365,34 @@ fun ListItem(item: OperationApiResponse, operationMap: MutableMap<String?, Opera
                     color = Color.White
                 )
             }
-            /*Button(
-                onClick = {
-                    println("Codigo: $codigo")
-                    viewModel.operationSelected = operationMap[codigo]
-                    viewModel.dataFromSelectedItem.value = true
-                    viewModel.repartidorId.value = operationMap[codigo]?.repartidor
-                    viewModel.tipoOperacion.value = operationMap[codigo]?.id_tipo_operacion
-                    println("operacion: ${viewModel.operationSelected}")
-                    val screen = if (item.id_tipo_operacion == "terceros") "third_screen" else "update_screen"
-                    navController.navigate(screen) {
-                        popUpTo("home_screen") { inclusive = true }
-                        popUpTo(screen) { inclusive = true }
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
-                shape = RoundedCornerShape(13.dp),
-                modifier = Modifier
-                    .height(40.dp)
-                    .padding(start = 5.dp)
-            ) {
-                Text(
-                    text = "Mover",
-                    color = Color.White
-                )
-            }*/
+            if (operationMap[codigo]?.id_tipo_operacion == "terceros") {
+                Button(
+                    onClick = {
+                        println("Codigo: $codigo")
+                        viewModel.operationSelected = operationMap[codigo]
+                        viewModel.dataFromSelectedItem.value = true
+                        viewModel.repartidorId.value = operationMap[codigo]?.repartidor
+                        viewModel.tipoOperacion.value = operationMap[codigo]?.id_tipo_operacion
+                        println("operacion: ${viewModel.operationSelected}")
+                        val screen = if (item.id_tipo_operacion == "terceros") "third_screen" else "update_screen"
+                        navController.navigate(screen) {
+                            popUpTo("home_screen") { inclusive = true }
+                            popUpTo(screen) { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
+                    shape = RoundedCornerShape(13.dp),
+                    modifier = Modifier
+                        .height(40.dp)
+                        .padding(start = 5.dp)
+                ) {
+                    Text(
+                        text = "Actualizar",
+                        color = Color.White
+                    )
+                }
+            }
+
         }
     }
 }

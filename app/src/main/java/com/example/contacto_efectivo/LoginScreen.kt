@@ -182,7 +182,7 @@ private fun accesoPermitido(context: Context, user: String, password: String, vi
         if (user == null || user == "" || password == null || password == "") {
             Toast.makeText(context, "Ingresa tus credenciales", Toast.LENGTH_SHORT).show()
         } else {
-            val apiResponse = httpRequests.auth(user = user, pass = password)
+            val apiResponse = httpRequests.auth(user = user.toString(), pass = password)
 
             withContext(Dispatchers.Main) {
                 if (apiResponse != null) {

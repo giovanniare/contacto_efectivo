@@ -12,6 +12,11 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.lang.reflect.Type
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+
 
 class HttpRequests {
     private val urlApiBase_ = "https://walrus-app-ja4xp.ondigitalocean.app"
@@ -50,17 +55,36 @@ class HttpRequests {
         }
     }
 
-    suspend fun getAllRepartidor(endPointStr: String, token: String?): List<OperationApiResponse>? {
+    suspend fun getAllRepartidor(endPointStr: String, token: String?, repartidorId: String?): List<OperationApiResponse>? {
         if (token == null || token == "") {
             println("Token invalido desde: **** getAllRepartidor ****")
             return null
         }
 
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, 1) // Le sumas un día
+
+        val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val formattedDate = formatter.format(calendar.time)
+        println("Formatted Date: $formattedDate")
+
+        val jsonBody = """
+            {
+                "repartidor": $repartidorId,
+                "fecha1": "2024-01-01",
+                "fecha2": "$formattedDate",
+                "finalizada": false
+            }
+        """
+
+        val requestBody = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
+        println("Post data: $jsonBody")
         println("Esta es la url que se manda: $urlApiBase_/$endPointStr")
         return withContext(Dispatchers.IO) {
             val request = Request.Builder()
                 .url("$urlApiBase_/$endPointStr")
                 .addHeader("token", token)
+                .post(requestBody) // Método POST
                 .build()
 
             try {
@@ -74,6 +98,7 @@ class HttpRequests {
                     }
                 } else {
                     println("Error: ${response.code}")
+                    println("Error: ${response.body?.string()}")
                     null
                 }
             } catch (e: Exception) {
