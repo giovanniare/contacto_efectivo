@@ -111,13 +111,13 @@ private fun ShowOperationDetails(operationData: MutableState<OperationApiRespons
     if (operacion != null) {
         Column {
             Text(
-                text = "ID de Operacion:",
+                text = "Codigo:",
                 fontSize = 20.sp,
                 color = Color(0xFF213E85),
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily(Font(R.font.inter_extrabold)),
                 modifier = Modifier
-                    .padding(top = 10.dp)
+                    .padding(top = 5.dp)
                     .align(Alignment.CenterHorizontally)
 
             )
@@ -155,6 +155,16 @@ private fun ShowOperationDetails(operationData: MutableState<OperationApiRespons
 
             )
             Text(
+                text = "ID de la operación: ${operacion.id}",
+                fontSize = 18.sp,
+                textAlign = TextAlign.Justify,
+                color = Color(0xFF213E85),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(top = 10.dp, bottom = 10.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Text(
                 text = "Informacion general del paquete",
                 fontSize = 20.sp,
                 textAlign = TextAlign.Center,
@@ -186,7 +196,7 @@ private fun ShowOperationDetails(operationData: MutableState<OperationApiRespons
 
             )
             Text(
-                text = operacion.direccion_inicio,
+                text = operacion.direccion_inicio ?: "N/A",
                 fontSize = 18.sp,
                 textAlign = TextAlign.Justify,
                 color = Color.Black,
@@ -206,7 +216,7 @@ private fun ShowOperationDetails(operationData: MutableState<OperationApiRespons
 
             )
             Text(
-                text = operacion.direccion_final,
+                text = operacion.direccion_final ?: "N/A",
                 fontSize = 18.sp,
                 textAlign = TextAlign.Justify,
                 color = Color.Black,
@@ -226,7 +236,7 @@ private fun ShowOperationDetails(operationData: MutableState<OperationApiRespons
 
             )
             Text(
-                text = operacion.nombre_referencia,
+                text = operacion.nombre_referencia ?: "N/A",
                 fontSize = 18.sp,
                 textAlign = TextAlign.Justify,
                 color = Color.Black,
