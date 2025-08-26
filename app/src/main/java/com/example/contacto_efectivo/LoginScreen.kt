@@ -2,6 +2,7 @@ package com.example.contacto_efectivo
 
 import android.app.Activity
 import android.content.Context
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -10,9 +11,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -58,11 +62,12 @@ import kotlin.system.exitProcess
 @Composable
 fun LogInScreen(onNavigateToHome: () -> Unit, viewModel: OperationsViewModel) {
     val context = LocalContext.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     val activity = (context as? Activity)
     val image = painterResource(id = R.drawable.leon_png)
     var userName by remember { mutableStateOf<String>("") }
     var password by remember { mutableStateOf("") }
-    var isLoading = mutableStateOf(true)
+    var loading by remember { mutableStateOf(false) }
 
     BackHandler {
         activity?.finish()
@@ -147,14 +152,24 @@ fun LogInScreen(onNavigateToHome: () -> Unit, viewModel: OperationsViewModel) {
             )
             Button(
                 onClick = {
-                    viewModel.getData.value = true
+                    keyboardController?.hide()
+                    loading = true
+                    println("Valor de loading: ${loading}")
                     accesoPermitido(
                         context = context,
                         user = userName,
                         password = password,
                         viewModel = viewModel,
-                        navToHome = {onNavigateToHome()})
+                        navToHome = {
+                            loading = false
+                            onNavigateToHome()
+                        },
+                        onFail = {
+                            loading = false
+                        }
+                    )
                 },
+                enabled = !loading,
                 colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.gold_theme)),
                 shape = RoundedCornerShape(13.dp),
                 modifier = Modifier
@@ -167,10 +182,64 @@ fun LogInScreen(onNavigateToHome: () -> Unit, viewModel: OperationsViewModel) {
                     color = Color.White
                 )
             }
+            // Spinner central si está cargando
+            if (loading) {
+                println("Si entra al spinner")
+                Spacer(modifier = Modifier.height(30.dp)) // un poco de espacio
+                CircularProgressIndicator(
+                    modifier = Modifier.width(64.dp)
+                        .align(Alignment.CenterHorizontally),
+                    color = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            }
         }
     }
 }
 
+private fun accesoPermitido(
+    context: Context,
+    user: String,
+    password: String,
+    viewModel: OperationsViewModel,
+    navToHome: () -> Unit,
+    onFail: () -> Unit
+) {
+    val httpRequests = HttpRequests()
+    val tokenManager = TokenManager(context)
+
+    CoroutineScope(Dispatchers.IO).launch {
+        if (user.isBlank() || password.isBlank()) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Ingresa tus credenciales", Toast.LENGTH_SHORT).show()
+                onFail()
+            }
+        } else {
+            val apiResponse = httpRequests.auth(user = user, pass = password)
+
+            withContext(Dispatchers.Main) {
+                if (apiResponse != null) {
+                    viewModel.repartidorId.value = apiResponse.user_id.toInt()
+                    tokenManager.saveToken(apiResponse)
+
+                    val userData = httpRequests.getUser(apiResponse.user_id, apiResponse.token)
+                    if (userData != null) {
+                        val userManager = UserManager(context)
+                        userManager.saveUser(userData)
+                    }
+
+                    navToHome()
+                } else {
+                    Toast.makeText(context, "Ingresa credenciales validas", Toast.LENGTH_SHORT).show()
+                    viewModel.repartidorId.value = null
+                    onFail()
+                }
+            }
+        }
+    }
+}
+
+/*
 private fun accesoPermitido(context: Context, user: String, password: String, viewModel: OperationsViewModel, navToHome: () -> Unit) {
     val httpRequests = HttpRequests()
     val tokenManager = TokenManager(context)
@@ -213,3 +282,4 @@ fun LoginPreview() {
         LogInScreen(onNavigateToHome = {}, viewModel = viewModel())
     }
 }
+*/

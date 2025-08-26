@@ -117,6 +117,9 @@ fun MyApp() {
         composable("permission_screen") {
             RequestPermissionsScreen(onNavigateToHome = { navController.navigate("login")})
         }
+        composable("spinner_screen") {
+            SpinnerView()
+        }
         composable("login") {
             LogInScreen(onNavigateToHome = { navController.navigate("home_screen")}, viewModel)
         }
