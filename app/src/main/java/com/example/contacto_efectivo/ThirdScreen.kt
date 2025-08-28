@@ -2,6 +2,7 @@ package com.example.contacto_efectivo
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -46,10 +48,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,6 +69,7 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
     val context = LocalContext.current
     val tokenManager = TokenManager(context)
     val token = tokenManager.getToken()
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Column(
         modifier = Modifier
@@ -84,7 +89,12 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
             TextField(
                 value = count.value,
                 onValueChange = {newValue ->  count.value = newValue },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyboardController?.hide()
+                    }
+                ),
                 shape = RoundedCornerShape(13.dp),
                 placeholder = { Text(
                     text = count.value,
@@ -98,7 +108,6 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
                 modifier = Modifier
                     .weight(1f)
                     .height(50.dp)
-
             )
         }
         Row(modifier = Modifier.padding(top = 16.dp)){
@@ -138,7 +147,7 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
                 onClick = {
                     if (viewModel.imageName.value != null) {
                         viewModel.thirdOperationInCourse.value = true
-                        sendUpdate(viewModel, recibidos = count.value, token = token)
+                        sendUpdate(viewModel, recibidos = count.value, token = token, context = context)
                         viewModel.getData.value = true
                         viewModel.operationSelected = null
                         viewModel.dataFromSelectedItem.value = null
@@ -197,12 +206,24 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
     val context = LocalContext.current
     val tokenManager = TokenManager(context)
     val token = tokenManager.getToken()
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 7.dp, end = 7.dp, top = 29.dp)
     ) {
+        Row(modifier = Modifier.padding(bottom = 16.dp)){
+            Text(
+                text = "Paquetes recibidos: ${viewModel.operationScaneed?.cantidad}",
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold,
+                color = colorResource(R.color.blue_btn),
+                modifier = Modifier
+                    .weight(2f)
+                    .align(Alignment.CenterVertically)
+            )
+        }
         Row(modifier = Modifier.padding(bottom = 16.dp)){
             Text(
                 text = "Paquetes Entregados",
@@ -216,7 +237,12 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
             TextField(
                 value = entregados.value,
                 onValueChange = { newValue -> entregados.value = newValue },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyboardController?.hide()
+                    }
+                ),
                 shape = RoundedCornerShape(13.dp),
                 placeholder = { Text(
                     text = entregados.value,
@@ -246,7 +272,12 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
             TextField(
                 value = devoluciones.value,
                 onValueChange = { newValue -> devoluciones.value = newValue },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyboardController?.hide()
+                    }
+                ),
                 shape = RoundedCornerShape(13.dp),
                 placeholder = { Text(
                     text = devoluciones.value,
@@ -300,16 +331,35 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
                 onClick = {
                     viewModel.thirdOperationInCourse.value = false
                     if (viewModel.imageName.value != null) {
-                        sendUpdate(viewModel, end = true, entregados = entregados.value, devoluciones = devoluciones.value, token =  token)
-                        entregados.value = ""
-                        devoluciones.value = ""
-                        viewModel.getData.value = true
-                        viewModel.operationSelected = null
-                        viewModel.dataFromSelectedItem.value = null
-                        viewModel.keepData.value = false
-                        viewModel.operationScaneed = null
-                        viewModel.dataFromSelectedItem.value = null
-                        onNavigateToHome()
+                        val recibidos = viewModel.operationScaneed?.cantidad
+                        if (recibidos == null) {
+                            Toast.makeText(
+                                context,
+                                "No hay paquetes recibidos. Error de flujo.",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        } else {
+                            val entregs = entregados.value.toInt()
+                            val devolus = devoluciones.value.toInt()
+                            if (entregs + devolus > recibidos || entregs + devolus < recibidos) {
+                                Toast.makeText(
+                                    context,
+                                    "Las entregas y devoluciones no son validas. No coinciden con el numero de paquetes recibidos recibidos",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }else {
+                                sendUpdate(viewModel, end = true, entregados = entregados.value, devoluciones = devoluciones.value, token =  token, context = context)
+                                entregados.value = ""
+                                devoluciones.value = ""
+                                viewModel.getData.value = true
+                                viewModel.operationSelected = null
+                                viewModel.dataFromSelectedItem.value = null
+                                viewModel.keepData.value = false
+                                viewModel.operationScaneed = null
+                                viewModel.dataFromSelectedItem.value = null
+                                onNavigateToHome()
+                            }
+                        }
                     } else {
                         Toast.makeText(context, "Sube una imagen de evidencia para continuar", Toast.LENGTH_LONG).show()
                     }},
@@ -606,7 +656,7 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
     }
 }
 
-private fun sendUpdate(viewModel: OperationsViewModel, recibidos: String = "0", entregados: String = "0", devoluciones: String = "0", end: Boolean = false, token: String?) {
+private fun sendUpdate(viewModel: OperationsViewModel, recibidos: String = "0", entregados: String = "0", devoluciones: String = "0", end: Boolean = false, token: String?, context: Context) {
     var opData = viewModel.operationScaneed
     var codigo = opData?.codigo
 

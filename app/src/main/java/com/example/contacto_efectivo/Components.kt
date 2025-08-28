@@ -60,6 +60,7 @@ fun AccountMenu(navController: NavController, viewModel: OperationsViewModel) {
             if (logoutResponse != null) {
                 viewModel.tipoOperacion.value = null
                 viewModel.repartidorId.value = null
+                viewModel.getData.value = true
                 tokenManager.clearToken()
                 userManager.clearUser()
                 navController.navigate("login")

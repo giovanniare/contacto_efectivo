@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -32,10 +33,12 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -253,9 +256,11 @@ fun ScrollableList(viewModel: OperationsViewModel, navController: NavController)
     val getData = viewModel.getData
     val httpRequests = HttpRequests()
     val tokenManager = TokenManager(context)
+    var loading by remember { mutableStateOf(false) }
 
     if (getData.value) {
         LaunchedEffect(Unit) {
+            loading = true
             viewModel.operationSelected = null
             viewModel.dataFromSelectedItem.value = null
             viewModel.repartidorId.value = null
@@ -266,6 +271,8 @@ fun ScrollableList(viewModel: OperationsViewModel, navController: NavController)
                 // Actualiza la lista con los resultados de la API
                 operations.value = it
                 getData.value = false
+                loading = false
+                actualizarLista(context)
             }
 
         }
@@ -276,35 +283,55 @@ fun ScrollableList(viewModel: OperationsViewModel, navController: NavController)
     val opActivas = filteredOperations.size
     val operationMap = mutableMapOf<String?, OperationApiResponse>()
 
+
+
     Column {
-        Text(
-            text = "Operaciones asignadas: ${opActivas ?: 0}",
-            textAlign = TextAlign.Justify,
-            color = Color(0xFF213E85),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 4.dp)
-        )
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()  // Ocupar todo el ancho
-                .fillMaxHeight(0.7f)  // Limitar a 50% de la altura de la pantalla
-                .padding(16.dp)
-        ) {
-            items(operations.value.filter { item ->
-                item.status !in viewModel.noMoreActions
-            }) { item ->
-                operationMap[item.codigo] = item
-                ListItem(item = item, operationMap = operationMap, viewModel = viewModel, navController = navController)
-                Divider() // Divider entre los items
+        if (loading) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.1f)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .width(64.dp)
+                        .align(Alignment.CenterHorizontally),
+                    color = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            }
+        } else {
+            Text(
+                text = "Operaciones asignadas: ${opActivas ?: 0}",
+                textAlign = TextAlign.Justify,
+                color = Color(0xFF213E85),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp)
+            )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()  // Ocupar todo el ancho
+                    .fillMaxHeight(0.7f)  // Limitar a 50% de la altura de la pantalla
+                    .padding(16.dp)
+            ) {
+                items(operations.value.filter { item ->
+                    item.status !in viewModel.noMoreActions
+                }) { item ->
+                    operationMap[item.codigo] = item
+                    ListItem(item = item, operationMap = operationMap, viewModel = viewModel, navController = navController)
+                    Divider() // Divider entre los items
+                }
             }
         }
         Button(
-            onClick = {
-                getData.value = true
-                actualizarLista(context)},
+            onClick = { getData.value = true },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
             shape = RoundedCornerShape(13.dp),
+            enabled = !loading,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .height(65.dp)

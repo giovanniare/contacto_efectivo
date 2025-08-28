@@ -124,7 +124,9 @@ class HttpRequests {
             try {
                 val response: Response = client.newCall(request).execute()
                 if (response.isSuccessful) {
-                    val responseBody = response.body?.string()
+                    val body = response.body?.string()
+                    val responseBody = body?.drop(1)?.dropLast(1)
+                    println("Esta es la respuesta: $responseBody")
                     responseBody?.let {
                         // Parsear el JSON a ApiResponse
                         gson.fromJson(it, User::class.java)

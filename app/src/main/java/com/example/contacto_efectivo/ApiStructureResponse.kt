@@ -48,12 +48,13 @@ data class User(
     val id: Int,
     val id_tipo: Int,
     val nombre: String,
-    val sueldo: String,
+    val sueldo: Float?,
     val posicion: String,
     val fecha_inicio: String,
-    val fecha_final: String,
+    val fecha_final: String?,
     val usuario_nombre: String,
-    val usuario_password: String
+    val usuario_password: String,
+    val ganancia: Float?,
 )
 
 data class AuthData(

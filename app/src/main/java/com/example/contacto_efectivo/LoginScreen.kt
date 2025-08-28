@@ -223,8 +223,10 @@ private fun accesoPermitido(
                     tokenManager.saveToken(apiResponse)
 
                     val userData = httpRequests.getUser(apiResponse.user_id, apiResponse.token)
+                    println("Valor de userData: $userData")
                     if (userData != null) {
                         val userManager = UserManager(context)
+                        println("Valor de userData: $userData")
                         userManager.saveUser(userData)
                     }
 
@@ -275,6 +277,8 @@ private fun accesoPermitido(context: Context, user: String, password: String, vi
     }
 }
 
+*/
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun LoginPreview() {
@@ -282,4 +286,3 @@ fun LoginPreview() {
         LogInScreen(onNavigateToHome = {}, viewModel = viewModel())
     }
 }
-*/
