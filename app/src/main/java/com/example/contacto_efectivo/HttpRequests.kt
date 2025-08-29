@@ -1,8 +1,10 @@
 package com.example.contacto_efectivo
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -11,17 +13,130 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import org.json.JSONArray
+import org.json.JSONObject
 import java.lang.reflect.Type
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
+
+class OperationApiResponseDeserializer : JsonDeserializer<OperationApiResponse> {
+
+    override fun deserialize(json: JsonElement, typeOfT: Type, ctx: JsonDeserializationContext): OperationApiResponse {
+        val o = json.asJsonObject
+
+        fun strOrNull(name: String): String? {
+            val el = o.get(name) ?: return null
+            if (el.isJsonNull) return null
+            val v = el.asString
+            return if (v.equals("null", ignoreCase = true)) null else v
+        }
+
+        fun intOrNull(name: String): Int? {
+            val el = o.get(name) ?: return null
+            return if (el.isJsonNull) null else el.asInt
+        }
+
+        fun doubleOrNull(name: String): Double? {
+            val el = o.get(name) ?: return null
+            return if (el.isJsonNull) null else el.asDouble
+        }
+
+        fun boolOrNull(name: String): Boolean? {
+            val el = o.get(name) ?: return null
+            return if (el.isJsonNull) null else el.asBoolean
+        }
+
+        val historialRaw = strOrNull("historial")
+        val historial = parseHistorialString(historialRaw)
+
+        return OperationApiResponse(
+            id = intOrNull("id") ?: 0,
+            id_tipo_operacion = strOrNull("id_tipo_operacion").orEmpty(),
+            codigo = strOrNull("codigo"),
+            status = strOrNull("status").orEmpty(),
+            direccion_inicio = strOrNull("direccion_inicio"),
+            direccion_final = strOrNull("direccion_final"),
+            codigo_postal = intOrNull("codigo_postal"),
+            tarifa = doubleOrNull("tarifa"),
+            fecha_inicio = strOrNull("fecha_inicio").orEmpty(),
+            fecha_final = strOrNull("fecha_final"),
+            cantidad = intOrNull("cantidad") ?: 0,
+            comentario = strOrNull("comentario"),
+            precio = doubleOrNull("precio"),
+            nombre_referencia = strOrNull("nombre_referencia"),
+            numero_referencia = strOrNull("numero_referencia"),
+            repartidor = intOrNull("repartidor"),
+            historial = historial,
+            peso = intOrNull("peso"),
+            largo = intOrNull("largo"),
+            ancho = intOrNull("ancho"),
+            alto = intOrNull("alto"),
+            devoluciones = intOrNull("devoluciones"),
+            entregas = intOrNull("entregas"),
+            imagen = strOrNull("imagen"),
+            imagenOpcional = strOrNull("imagen_opcional"),
+            monicipioId = intOrNull("monicipio_id"),
+            municipioNombre = strOrNull("municipio_nombre"),
+            finalizada = boolOrNull("finalizada"),
+            pagado = boolOrNull("pagado"),
+            idProveedor = intOrNull("id_proveedor")
+        )
+    }
+
+    private fun parseHistorialString(raw: String?): List<Movimiento>? {
+        if (raw.isNullOrBlank()) return null
+        val trimmed = raw.trim()
+
+        // Caso "OrderedDict()" vacío
+        if (trimmed.equals("OrderedDict()", ignoreCase = true)) return emptyList()
+
+        // Normalizamos: quitamos OrderedDict( y ) y cambiamos ' por "
+        var s = trimmed
+            .replace("OrderedDict(", "")
+            .replace(")", "")
+            .replace("'", "\"")
+
+        return try {
+            // Intenta como array: [{...}, {...}]
+            val arr = JSONArray(s)
+            (0 until arr.length()).map { i ->
+                val obj = arr.getJSONObject(i)
+                Movimiento(
+                    fecha = obj.optLong("fecha"),
+                    status = obj.optString("status"),
+                    user = obj.optString("user"),
+                    descripcion = obj.optString("descripcion")
+                )
+            }
+        } catch (_: Exception) {
+            // Intenta como objeto único: {...}
+            try {
+                val obj = JSONObject(s)
+                listOf(
+                    Movimiento(
+                        fecha = obj.optLong("fecha"),
+                        status = obj.optString("status"),
+                        user = obj.optString("user"),
+                        descripcion = obj.optString("descripcion")
+                    )
+                )
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+}
 
 class HttpRequests {
     private val urlApiBase_ = "https://walrus-app-ja4xp.ondigitalocean.app"
     private val client = OkHttpClient()
-    private val gson = Gson() // Inicializa Gson
+    private val gson: Gson = GsonBuilder()
+        .serializeNulls()
+        .registerTypeAdapter(OperationApiResponse::class.java, OperationApiResponseDeserializer())
+        .setLenient()
+        .create()
 
     suspend fun getOperation(endPointStr: String, token: String?): OperationApiResponse? {
         if (token == null || token == "") {
@@ -42,7 +157,7 @@ class HttpRequests {
                     val responseBody = response.body?.string()
                     responseBody?.let {
                         // Parsear el JSON a ApiResponse
-                        gson.fromJson(it, OperationApiResponse::class.java)
+                        return@withContext gson.fromJson(it, OperationApiResponse::class.java)
                     }
                 } else {
                     println("Error: ${response.code}")
@@ -92,7 +207,6 @@ class HttpRequests {
                 if (response.isSuccessful) {
                     val responseBody = response.body?.string()
                     responseBody?.let {
-                        // Parsear el JSON a una lista de ApiResponse
                         val listType: Type = object : TypeToken<List<OperationApiResponse>>() {}.type
                         return@withContext gson.fromJson<List<OperationApiResponse>>(it, listType)
                     }

@@ -210,7 +210,7 @@ fun Options(
         color = Color(0xFF213E85)
     )
     if (operationData != null) {
-        CallButton(phoneNumber = operationData.numero_referencia)
+        CallButton(phoneNumber = operationData.numero_referencia ?: "N/A")
     }
 
     Text(
@@ -443,6 +443,19 @@ private fun sendUpdate(
 
         if (canUpdate) {
             val tokenManager = TokenManager(context)
+            val userManager = UserManager(context)
+            val userName = userManager.getName()
+            var historial = operationData.historial
+            val nuevoMovimiento = Movimiento(
+                fecha = System.currentTimeMillis(),
+                status = operationData.status,
+                user = userName,
+                descripcion = "Operacion actualizada por un repartidor desde el app movil"
+            )
+
+            historial = historial?.plus(nuevoMovimiento)
+            operationData.historial = historial
+
             updateOperationStatus(codigo, operationData, tokenManager.getToken())
             viewModel.getData.value = true
 

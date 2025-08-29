@@ -659,18 +659,31 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
 private fun sendUpdate(viewModel: OperationsViewModel, recibidos: String = "0", entregados: String = "0", devoluciones: String = "0", end: Boolean = false, token: String?, context: Context) {
     var opData = viewModel.operationScaneed
     var codigo = opData?.codigo
+    val userManager = UserManager(context)
+    val userName = userManager.getName()
 
     if (opData != null && codigo != null) {
         if (end) {
             opData.entregas = entregados.toInt()
             opData.devoluciones = devoluciones.toInt()
-            opData.imagen_opcional = viewModel.imageCompressed.value
+            opData.imagenOpcional = viewModel.imageCompressed.value
             opData.status = "efectiva"
         } else {
             opData.cantidad = recibidos.toInt()
             opData.imagen = viewModel.imageCompressed.value
             opData.status = "en ruta"
         }
+
+        val nuevoMovimiento = Movimiento(
+            fecha = System.currentTimeMillis(),
+            status = opData.status,
+            user = userName,
+            descripcion = "Operacion actualizada por un repartidor desde el app movil"
+        )
+
+        var historial = opData.historial
+        historial = historial?.plus(nuevoMovimiento)
+        opData.historial = historial
 
         updateOperationStatus(codigo, opData, token)
         viewModel.keepData.value = false

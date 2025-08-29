@@ -1,38 +1,41 @@
 package com.example.contacto_efectivo
 
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+
 
 data class OperationApiResponse(
     val id: Int,
     val id_tipo_operacion: String,
     val codigo: String?,
     var status: String,
-    val direccion_inicio: String,
-    val direccion_final: String,
-    val codigo_postal: Int,
-    val tarifa: String,
+    val direccion_inicio: String?,
+    val direccion_final: String?,
+    val codigo_postal: Int?,
+    val tarifa: Double?,
     val fecha_inicio: String,
-    val fecha_final: String,
+    val fecha_final: String?,
     var cantidad: Int,
-    var comentario: String = "",
-    val precio: String?,
-    val nombre_referencia: String,
-    val numero_referencia: String,
+    var comentario: String?,
+    val precio: Double?,
+    val nombre_referencia: String?,
+    val numero_referencia: String?,
     val repartidor: Int?,
-    //var historial: String?,
-    val peso: Int,
-    val largo: Int,
-    val ancho: Int,
-    val alto: Int,
-    var devoluciones: Int,
-    var entregas: Int,
-    //var inventario_relacion: String?,
+    var historial: List<Movimiento>?,
+    val peso: Int?,
+    val largo: Int?,
+    val ancho: Int?,
+    val alto: Int?,
+    var devoluciones: Int?,
+    var entregas: Int?,
+    //@SerializedName("inventario_relacion") val inventarioRelacion: String?,
     var imagen: String?,
-    var imagen_opcional: String?,
-    var monicipio_id: Int?,
-    var municipio_nombre: String,
-    var finalizada: Boolean?,
-    var pagado: Boolean?,
+    @SerializedName("imagen_opcional") var imagenOpcional: String?,
+    @SerializedName("monicipio_id") val monicipioId: Int?,
+    @SerializedName("municipio_nombre") val municipioNombre: String?,
+    val finalizada: Boolean?,
+    val pagado: Boolean?,
+    @SerializedName("id_proveedor") val idProveedor: Int?
 )
 
 // Función para convertir el JSON a un objeto Operacion
@@ -63,6 +66,14 @@ data class AuthData(
     val token: String,
     val created: String
 )
+
+data class Movimiento(
+    val fecha: Long,
+    val status: String,
+    val user: String?,
+    val descripcion: String,
+)
+
 
 fun parseJsonToUser(jsonString: String): User? {
     return try {

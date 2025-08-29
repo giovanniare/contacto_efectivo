@@ -246,7 +246,7 @@ private fun ShowOperationDetails(operationData: MutableState<OperationApiRespons
 
             )
 
-            CallButton(phoneNumber = operacion.numero_referencia)
+            CallButton(phoneNumber = operacion.numero_referencia ?: "N/A")
         }
     } else {
         Text(text = "No se pudo cargar la operación.")
