@@ -61,6 +61,8 @@ fun AccountMenu(navController: NavController, viewModel: OperationsViewModel) {
                 viewModel.tipoOperacion.value = null
                 viewModel.repartidorId.value = null
                 viewModel.getData.value = true
+                viewModel.operationsList.value = emptyList()
+                viewModel.municipios.value = emptyList()
                 tokenManager.clearToken()
                 userManager.clearUser()
                 navController.navigate("login")

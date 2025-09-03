@@ -77,6 +77,20 @@ fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
     val userManager = UserManager(LocalContext.current)
     val userName = userManager.getName()
     var deliveryMan by remember { mutableStateOf("") }
+    val routeManager = RouteManager(context)
+    routeManager.initializeLocationClient()
+
+    if (viewModel.municipios.value.isEmpty()) {
+        LaunchedEffect(Unit) {
+            val tokenManager = TokenManager(context)
+            val apiResponse = HttpRequests().getMunicipios(tokenManager.getToken())
+            apiResponse?.let {
+                println("Municipios: $it")
+                viewModel.municipios.value = it
+            }
+        }
+    }
+
 
     if (userName != null) {
         deliveryMan = userName
@@ -118,7 +132,8 @@ fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
 
                 Button(
                     onClick = {
-                        val origin = "CDMX"
+                        /*
+                        val origin = "Calle.Lago de Oso, #73, Int null, Col: Lagos del Country"
                         val destination = "Guadalajara"
                         val waypoints = listOf("Puebla", "Querétaro")
                         val waypointsString = waypoints.joinToString("|") { it.replace(" ", "+") }
@@ -127,6 +142,9 @@ fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                         intent.setPackage("com.google.android.apps.maps")
                         context.startActivity(intent)
+                        */
+
+                        routeManager.openRouteInGoogleMaps(viewModel.operationsList.value, viewModel)
                     },
                     shape = RoundedCornerShape(13.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -265,6 +283,7 @@ fun ScrollableList(viewModel: OperationsViewModel, navController: NavController)
             viewModel.dataFromSelectedItem.value = null
             viewModel.repartidorId.value = null
             viewModel.tipoOperacion.value = null
+            viewModel.operationsList.value = emptyList()
 
             val apiResponse = httpRequests.getAllRepartidor("operacion/repartidor/", tokenManager.getToken(), tokenManager.getUserId())
             apiResponse?.let {
@@ -273,6 +292,7 @@ fun ScrollableList(viewModel: OperationsViewModel, navController: NavController)
                 getData.value = false
                 loading = false
                 actualizarLista(context)
+                viewModel.operationsList.value = it
             }
 
         }

@@ -7,6 +7,10 @@ android {
     namespace = "com.example.contacto_efectivo"
     compileSdk = 34
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.example.contacto_efectivo"
         minSdk = 24
@@ -18,6 +22,15 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Constante para usar en Kotlin/Java
+        buildConfigField("String", "MAPS_API_KEY", "\"${project.properties["MAPS_API_KEY"]}\"")
+
+        // Placeholder para AndroidManifest.xml
+        manifestPlaceholders.putAll(
+            mapOf("MAPS_API_KEY" to (project.properties["MAPS_API_KEY"] ?: ""))
+        )
+
     }
 
     buildTypes {
@@ -78,6 +91,7 @@ dependencies {
 
     // Parse to json
     implementation(libs.gson)
+    implementation(libs.play.services.location)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

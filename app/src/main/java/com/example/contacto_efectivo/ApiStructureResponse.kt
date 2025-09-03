@@ -74,6 +74,17 @@ data class Movimiento(
     val descripcion: String,
 )
 
+data class Municipio(
+    val id : Int,
+    val nombre : String,
+)
+
+data class MunicipiosResponse(
+    val count: Int,
+    val next: String?,
+    val previous: String?,
+    val results: List<Municipio>
+)
 
 fun parseJsonToUser(jsonString: String): User? {
     return try {

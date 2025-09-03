@@ -361,4 +361,37 @@ class HttpRequests {
             }
         }
     }
+
+    suspend fun getMunicipios(token: String?): List<Municipio>? {
+        if (token == null || token == "") {
+            return emptyList()
+        }
+
+        println("Esta es la url que se manda: $urlApiBase_/municipios/")
+        return withContext(Dispatchers.IO) {
+            val request = Request.Builder()
+                .url("$urlApiBase_/municipios")
+                .addHeader("token", token)
+                .build()
+
+            try {
+                val response: Response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    responseBody?.let {
+                        val municipiosResponse = gson.fromJson(it, MunicipiosResponse::class.java)
+                        municipiosResponse.results
+                    }
+                } else {
+                    println("Error: ${response.code}")
+                    println("Error: ${response.body?.string()}")
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                println("Exception: ${e.message}")
+                emptyList()
+            }
+        }
+
+    }
 }
