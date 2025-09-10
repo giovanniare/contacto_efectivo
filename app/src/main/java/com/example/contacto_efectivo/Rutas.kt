@@ -102,6 +102,76 @@ class RouteManager(context: Context) {
             .trim()
     }
 
+    fun openDirection(operation: OperationApiResponse, viewModel: OperationsViewModel) {
+        if (!::fusedLocationClient.isInitialized) {
+            return
+        }
+
+        val LOCATION_PERMISSION_REQUEST = 1001
+        val context = context
+
+        if (operation.direccion_final == null || operation.codigo_postal == null) {
+            Toast.makeText(context, "Dirección inválida", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                context as Activity,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST
+            )
+            return
+        }
+
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    val lat = location.latitude
+                    val lon = location.longitude
+                    Toast.makeText(context, "Lat: $lat, Lon: $lon", Toast.LENGTH_LONG).show()
+                    val origin = "$lat,$lon"
+
+                    val dir = operation.direccion_final
+                    val cp = operation.codigo_postal
+                    val munId  = operation.monicipioId
+                    val municipios = viewModel.municipios.value
+
+                    val direccion = "$dir, $cp, ${municipios.find { it.id == munId }?.nombre}"
+                    val direccionValida = limpiarDireccion(direccion)
+
+                    val url = buildString {
+                        append("https://www.google.com/maps/dir/?api=1")
+                        append("&origin=$origin")
+                        append("&destination=$direccionValida")
+                    }
+                    println("URL: $url")
+
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                        setPackage("com.google.android.apps.maps")
+                    }
+
+                    try {
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Google Maps no está instalado", Toast.LENGTH_SHORT).show()
+                    }
+
+                } else {
+                    Toast.makeText(context, "No se pudo obtener la ubicación", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+    }
+
     fun openRouteInGoogleMaps(operations: List<OperationApiResponse>, viewModel: OperationsViewModel) {
 
         if (!::fusedLocationClient.isInitialized) {

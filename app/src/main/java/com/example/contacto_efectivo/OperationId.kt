@@ -25,6 +25,7 @@ class OperationsViewModel: ViewModel() {
     var getData = mutableStateOf<Boolean>(true)
     var operationsList = mutableStateOf<List<OperationApiResponse>>(emptyList())
     var municipios = mutableStateOf<List<Municipio>>(emptyList())
+    var proveedores = mutableStateOf<List<Proveedor>>(emptyList())
 
     val agendada = listOf("en ruta", "cancelada", "efectiva")
     val enRuta = listOf("efectiva", "transferencia", "reagendada", "cancelada")

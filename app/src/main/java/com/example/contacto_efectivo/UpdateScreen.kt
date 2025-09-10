@@ -46,6 +46,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
@@ -210,7 +213,7 @@ fun Options(
         color = Color(0xFF213E85)
     )
     if (operationData != null) {
-        CallButton(phoneNumber = operationData.numero_referencia ?: "N/A")
+        CallButton(operationData, viewModel)
     }
 
     Text(
@@ -455,6 +458,12 @@ private fun sendUpdate(
 
             historial = historial?.plus(nuevoMovimiento)
             operationData.historial = historial
+            if (operationData.status === "efectiva") {
+                val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val fechaFormateada = formatter.format(Date())
+
+                operationData.fecha_final = fechaFormateada
+            }
 
             updateOperationStatus(codigo, operationData, tokenManager.getToken())
             viewModel.getData.value = true

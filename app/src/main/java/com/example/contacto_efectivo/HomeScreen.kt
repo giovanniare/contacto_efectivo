@@ -91,6 +91,17 @@ fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
         }
     }
 
+    if (viewModel.proveedores.value.isEmpty()) {
+        val tokenManager = TokenManager(context)
+        LaunchedEffect(Unit) {
+            val apiResponse2 = HttpRequests().getProveedores(tokenManager.getToken())
+            apiResponse2?.let {
+                println("Proveedores: $it")
+                viewModel.proveedores.value = it
+            }
+        }
+    }
+
 
     if (userName != null) {
         deliveryMan = userName

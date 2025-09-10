@@ -394,4 +394,37 @@ class HttpRequests {
         }
 
     }
+
+    suspend fun getProveedores(token: String?): List<Proveedor>? {
+        if (token == null || token == "") {
+            return emptyList()
+        }
+
+        println("Esta es la url que se manda: $urlApiBase_/proveedores/")
+        return withContext(Dispatchers.IO) {
+            val request = Request.Builder()
+                .url("$urlApiBase_/proveedores")
+                .addHeader("token", token)
+                .build()
+
+            try {
+                val response: Response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    responseBody?.let {
+                        val proveedoresResponse = gson.fromJson(it, ProveedoresResponse::class.java)
+                        proveedoresResponse.results
+                    }
+                } else {
+                    println("Error: ${response.code}")
+                    println("Error: ${response.body?.string()}")
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                println("Exception: ${e.message}")
+                emptyList()
+            }
+        }
+
+    }
 }

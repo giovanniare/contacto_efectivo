@@ -5,6 +5,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -81,7 +83,7 @@ fun ConsultScreen(navController: NavController, viewModel: OperationsViewModel) 
                 .fillMaxWidth()
         ) {
             if (success.value) {
-                ShowOperationDetails(operationData = data)
+                ShowOperationDetails(operationData = data, viewModel = viewModel)
             } else {
                 Text(
                     text = "No tienes acceso a esta operacion",
@@ -105,148 +107,15 @@ fun ConsultScreen(navController: NavController, viewModel: OperationsViewModel) 
 }
 
 @Composable
-private fun ShowOperationDetails(operationData: MutableState<OperationApiResponse?>) {
+private fun ShowOperationDetails(operationData: MutableState<OperationApiResponse?>, viewModel: OperationsViewModel) {
     val operacion = operationData.value
 
     if (operacion != null) {
-        Column {
-            Text(
-                text = "Codigo:",
-                fontSize = 20.sp,
-                color = Color(0xFF213E85),
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily(Font(R.font.inter_extrabold)),
-                modifier = Modifier
-                    .padding(top = 5.dp)
-                    .align(Alignment.CenterHorizontally)
-
-            )
-            Text(
-                text = "${operacion.codigo}",
-                fontSize = 20.sp,
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily(Font(R.font.inter_extrabold)),
-                modifier = Modifier
-                    .padding(5.dp)
-                    .align(Alignment.CenterHorizontally)
-
-            )
-            Text(
-                text = "Estatus:",
-                fontSize = 20.sp,
-                color = Color(0xFF213E85),
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily(Font(R.font.inter_extrabold)),
-                modifier = Modifier
-                    .padding(top = 10.dp)
-                    .align(Alignment.CenterHorizontally)
-
-            )
-            Text(
-                text = operacion.status,
-                fontSize = 20.sp,
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily(Font(R.font.inter_extrabold)),
-                modifier = Modifier
-                    .padding(5.dp)
-                    .align(Alignment.CenterHorizontally)
-
-            )
-            Text(
-                text = "ID de la operación: ${operacion.id}",
-                fontSize = 18.sp,
-                textAlign = TextAlign.Justify,
-                color = Color(0xFF213E85),
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(top = 10.dp, bottom = 10.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-            Text(
-                text = "Informacion general del paquete",
-                fontSize = 20.sp,
-                textAlign = TextAlign.Center,
-                color = Color(0xFF213E85),
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(top = 10.dp, bottom = 10.dp)
-                    .align(Alignment.CenterHorizontally)
-
-            )
-            Text(
-                text = "Tipo: ${operacion.id_tipo_operacion}",
-                fontSize = 18.sp,
-                textAlign = TextAlign.Justify,
-                color = Color(0xFF213E85),
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(start = 27.dp)
-
-            )
-            Text(
-                text = "Dirección de Inicio:",
-                fontSize = 18.sp,
-                textAlign = TextAlign.Justify,
-                color = Color(0xFF213E85),
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(start = 27.dp)
-
-            )
-            Text(
-                text = operacion.direccion_inicio ?: "N/A",
-                fontSize = 18.sp,
-                textAlign = TextAlign.Justify,
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(start = 27.dp)
-
-            )
-            Text(
-                text = "Dirección Final:",
-                fontSize = 18.sp,
-                textAlign = TextAlign.Justify,
-                color = Color(0xFF213E85),
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(start = 27.dp, top = 5.dp)
-
-            )
-            Text(
-                text = operacion.direccion_final ?: "N/A",
-                fontSize = 18.sp,
-                textAlign = TextAlign.Justify,
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(start = 27.dp)
-
-            )
-            Text(
-                text = "Nombre de Referencia:",
-                fontSize = 18.sp,
-                textAlign = TextAlign.Justify,
-                color = Color(0xFF213E85),
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(start = 27.dp, top = 5.dp)
-
-            )
-            Text(
-                text = operacion.nombre_referencia ?: "N/A",
-                fontSize = 18.sp,
-                textAlign = TextAlign.Justify,
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(start = 27.dp)
-
-            )
-
-            CallButton(phoneNumber = operacion.numero_referencia ?: "N/A")
+        if (operacion.id_tipo_operacion == "terceros") {
+            ThirdConsultView(operacion = operacion, viewModel = viewModel)
+        }
+        else {
+            GenericConsultView(operacion = operacion, viewModel = viewModel)
         }
     } else {
         Text(text = "No se pudo cargar la operación.")
@@ -254,10 +123,13 @@ private fun ShowOperationDetails(operationData: MutableState<OperationApiRespons
 }
 
 @Composable
-fun CallButton(phoneNumber: String) {
+fun CallButton(operacion: OperationApiResponse, viewModel: OperationsViewModel) {
+    val phoneNumber = operacion.numero_referencia ?: "N/A"
     val context = LocalContext.current
+    val routeManager = RouteManager(context)
+    routeManager.initializeLocationClient()
 
-    Row{
+    Row (horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
         Button(
             onClick = {
                 try {
@@ -280,7 +152,7 @@ fun CallButton(phoneNumber: String) {
                 contentDescription = "Llamar",
                 tint = Color.White
             )
-            Text(text = "Llamar", color = Color.White)
+            //Text(text = "Llamar", color = Color.White)
         }
         Button(
             onClick = {
@@ -312,7 +184,266 @@ fun CallButton(phoneNumber: String) {
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
-            Text(text = "Mensaje", color = Color.White)
+            //Text(text = "Mensaje", color = Color.White)
         }
+        Button(
+            onClick = {
+                try {
+                    println("Antes de la verificacion del viewModel")
+                    println("Si entra al boton de la direccion")
+                    routeManager.openDirection(operacion, viewModel)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Un error ocurrio.", Toast.LENGTH_SHORT).show()
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
+            shape = RoundedCornerShape(13.dp),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.LocationOn,
+                contentDescription = "Ubicacion",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+            //Text(text = "Direccion", color = Color.White)
+        }
+    }
+}
+
+@Composable
+private fun ThirdConsultView(operacion: OperationApiResponse, viewModel: OperationsViewModel) {
+    val proveedores = viewModel.proveedores.value
+    val proveedor: Proveedor? = proveedores.find { it.id == operacion.idProveedor }
+
+    Column {
+        Text(
+            text = "Codigo:",
+            fontSize = 20.sp,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+            modifier = Modifier
+                .padding(top = 5.dp)
+                .align(Alignment.CenterHorizontally)
+
+        )
+        Text(
+            text = "${operacion.codigo}",
+            fontSize = 20.sp,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+            modifier = Modifier
+                .padding(5.dp)
+                .align(Alignment.CenterHorizontally)
+
+        )
+        Text(
+            text = "Estatus:",
+            fontSize = 20.sp,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+            modifier = Modifier
+                .padding(top = 10.dp)
+                .align(Alignment.CenterHorizontally)
+
+        )
+        Text(
+            text = operacion.status,
+            fontSize = 20.sp,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+            modifier = Modifier
+                .padding(5.dp)
+                .align(Alignment.CenterHorizontally)
+
+        )
+        Text(
+            text = "Informacion general del paquete",
+            fontSize = 20.sp,
+            textAlign = TextAlign.Center,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(top = 10.dp, bottom = 10.dp)
+                .align(Alignment.CenterHorizontally)
+
+        )
+        Text(
+            text = "Tipo: ${operacion.id_tipo_operacion}",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp)
+
+        )
+        Text(
+            text = "Proveedor: ${proveedor?.nombre}",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp)
+
+        )
+        Text(
+            text = "Fecha de Inicio:",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp)
+
+        )
+        Text(
+            text = operacion.fecha_inicio,
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp)
+
+        )
+        Text(
+            text = "Comentario:",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp, top = 5.dp)
+
+        )
+        Text(
+            text = operacion.comentario ?: "N/A",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp)
+
+        )
+
+    }
+}
+
+
+@Composable
+private fun GenericConsultView(operacion: OperationApiResponse, viewModel: OperationsViewModel) {
+    Column {
+        Text(
+            text = "Codigo:",
+            fontSize = 20.sp,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+            modifier = Modifier
+                .padding(top = 5.dp)
+                .align(Alignment.CenterHorizontally)
+
+        )
+        Text(
+            text = "${operacion.codigo}",
+            fontSize = 20.sp,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+            modifier = Modifier
+                .padding(5.dp)
+                .align(Alignment.CenterHorizontally)
+
+        )
+        Text(
+            text = "Estatus: ${operacion.status}",
+            fontSize = 20.sp,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+            modifier = Modifier
+                .padding(top = 10.dp)
+                .align(Alignment.CenterHorizontally)
+
+        )
+        Text(
+            text = "Importe: $${operacion.precio}",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(top = 10.dp, bottom = 10.dp)
+                .align(Alignment.CenterHorizontally)
+        )
+        Text(
+            text = "Informacion general del paquete",
+            fontSize = 20.sp,
+            textAlign = TextAlign.Center,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(top = 10.dp, bottom = 10.dp)
+                .align(Alignment.CenterHorizontally)
+
+        )
+        Text(
+            text = "Tipo: ${operacion.id_tipo_operacion}",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp)
+
+        )
+        Text(
+            text = "Dirección de entrega:",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp)
+
+        )
+        Text(
+            text = operacion.direccion_final ?: "N/A",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp)
+
+        )
+        Text(
+            text = "Cliente:",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color(0xFF213E85),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp, top = 5.dp)
+
+        )
+        Text(
+            text = operacion.nombre_referencia ?: "N/A",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Justify,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(start = 27.dp)
+
+        )
+        CallButton(operacion, viewModel)
     }
 }

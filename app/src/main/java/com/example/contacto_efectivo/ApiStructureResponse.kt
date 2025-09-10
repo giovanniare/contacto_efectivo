@@ -14,7 +14,7 @@ data class OperationApiResponse(
     val codigo_postal: Int?,
     val tarifa: Double?,
     val fecha_inicio: String,
-    val fecha_final: String?,
+    var fecha_final: String?,
     var cantidad: Int,
     var comentario: String?,
     val precio: Double?,
@@ -84,6 +84,21 @@ data class MunicipiosResponse(
     val next: String?,
     val previous: String?,
     val results: List<Municipio>
+)
+
+data class Proveedor(
+    val id: Int,
+    val nombre: String,
+    val tarifa: Float?,
+    val tarifa_contacto_efectivo: Float?,
+    val tarifa_repartidor: Float?
+)
+
+data class ProveedoresResponse(
+    val count: Int,
+    val next: String?,
+    val previous: String?,
+    val results: List<Proveedor>
 )
 
 fun parseJsonToUser(jsonString: String): User? {

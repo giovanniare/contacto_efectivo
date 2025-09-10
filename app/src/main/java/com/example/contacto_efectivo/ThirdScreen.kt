@@ -59,6 +59,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.activity.compose.rememberLauncherForActivityResult as rememberLauncherForActivityResult1
 
 @SuppressLint("ResourceAsColor")
@@ -664,6 +667,10 @@ private fun sendUpdate(viewModel: OperationsViewModel, recibidos: String = "0", 
 
     if (opData != null && codigo != null) {
         if (end) {
+            val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val fechaFormateada = formatter.format(Date())
+
+            opData.fecha_final = fechaFormateada
             opData.entregas = entregados.toInt()
             opData.devoluciones = devoluciones.toInt()
             opData.imagenOpcional = viewModel.imageCompressed.value
