@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,15 +78,17 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MyApp() {
+    val context = LocalContext.current
     val navController = rememberNavController()
     val viewModel: OperationsViewModel = viewModel()
     var startScreen by remember { mutableStateOf<String>("") }
-    val tokenManager = TokenManager(context = LocalContext.current)
+    val tokenManager = TokenManager(context = context)
     val token = tokenManager.getToken()
-    val userManager = UserManager(context = LocalContext.current)
+    val userManager = UserManager(context = context)
     var permissionsGranted by remember { mutableStateOf(false) }
+    val userName = userManager.getName()
 
-    permissionsGranted = checkPermissions(LocalContext.current)
+    permissionsGranted = checkPermissions(context)
 
     if (!permissionsGranted) {
         startScreen = "permission_screen"
@@ -145,13 +148,59 @@ fun MyApp() {
             var userInput = remember { mutableStateOf("") }
             BarcodeScannerScreen(
                 onCodeScanned = { scannedCode ->
-                    userInput.value = scannedCode // Asignar el código escaneado
+                    userInput.value = scannedCode
                     navController.popBackStack()
                 },
                 onNavigateBack = {
-                    navController.navigate(viewModel.onBackfromScanScreen.value) // Regresar a la pantalla anterior sin código
+                    navController.navigate(viewModel.onBackfromScanScreen.value)
                 },
-                viewModel = viewModel
+                viewModel = viewModel,
+                onNavigateToHome = {
+                    navController.navigate("home_screen")
+                }
+            )
+        }
+        composable("thinking_screen") {
+            ThinkingView(viewModel, navController, tokenManager)
+        }
+        composable("success_view") {
+
+            StatusView(
+                succeed = true,
+                sentece = viewModel.statusMessage.value,
+                viewModel = viewModel,
+                navController = navController
+            )
+        }
+        composable("error_view") {
+            StatusView(
+                succeed = false,
+                sentece = viewModel.statusMessage.value,
+                viewModel = viewModel,
+                navController = navController
+            )
+        }
+        composable("multi_barcode_scan_screen") {
+
+            val userInput = remember { mutableStateOf("") }
+            viewModel.nextStatusScreen.value = "multi_barcode_scan_screen"
+
+            BarcodeScannerScreen(
+                onCodeScanned = { scannedCode ->
+                    println("Entra al onCodeScanned y sale de ejecutar la funcion")
+                    userInput.value = scannedCode
+                },
+                onNavigateBack = {
+                    navController.navigate("thinking_screen")
+                },
+                viewModel = viewModel,
+                onNavigateToHome = {
+                    println("Entra al onNavigateToHome")
+                    viewModel.nextStatusScreen.value = ""
+                    viewModel.statusMessage.value = ""
+                    viewModel.clearOperation()
+                    navController.navigate("home_screen")
+                }
             )
         }
         composable("photo_screen") {

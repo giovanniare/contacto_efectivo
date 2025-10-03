@@ -227,5 +227,66 @@ fun TomarEvidencia(
             }
         )
     }
+}
+
+@Composable
+fun ConfirmationPopup(
+    showPopup: Boolean,
+    message: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    if (!showPopup) return
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        dismissButton = {
+            Button(onClick = { onDismiss() }) {
+                Text("Cancelar")
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onConfirm() } )
+            {
+                Text("Confirmar")
+            }
+        },
+        title = { Text(text = "Alerta") },
+        text = { Text(text = message) }
+    )
+}
+
+@Composable
+fun SelectorPopUp(
+    showPopup: Boolean,
+    onDismiss: () -> Unit,
+    navController: NavController
+) {
+    if (!showPopup) return
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        dismissButton = {
+            Button(onClick = { onDismiss() }) {
+                Text("Cancelar")
+            }
+        },
+        confirmButton = {
+            // TODO
+        },
+        title = {
+            Text(text = "Selecciona el tipo de codigo a escanear:")
+        },
+        text = {
+            Column {
+                Text(text = "1. Producto")
+                Button(onClick = { navController.navigate("multi_barcode_scan_screen") }) {
+                    Text(text = "Codigo de Barras")
+                }
+                Text(text = "2. Internas")
+                Button(onClick = { /*TODO*/ }) {
+                    Text(text = "Codigo QR")
+                }
+            }
+        }
+    )
 
 }

@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.contacto_efectivo"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -92,6 +92,12 @@ dependencies {
     // Parse to json
     implementation(libs.gson)
     implementation(libs.play.services.location)
+
+    // Lottie animations
+    implementation(libs.lottie)
+
+    // More icons
+    implementation(libs.iconsextended)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

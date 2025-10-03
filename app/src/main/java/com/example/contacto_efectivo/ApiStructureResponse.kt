@@ -101,6 +101,33 @@ data class ProveedoresResponse(
     val results: List<Proveedor>
 )
 
+data class Flujo(
+    val creada: List<String>,
+    val asignada_intento_1: List<String>,
+    val en_ruta_intento_1: List<String>,
+    val intento_2: List<String>,
+    val asignada_intento_2: List<String>,
+    val en_ruta_intento_2: List<String>,
+    val efectiva: List<String>,
+    val cancelada: List<String>,
+    val retorno: List<String>
+) {
+    operator fun get(key: String): List<String>? {
+        return when (key) {
+            "creada" -> creada
+            "asignada_intento_1" -> asignada_intento_1
+            "en_ruta_intento_1" -> en_ruta_intento_1
+            "intento_2" -> intento_2
+            "asignada_intento_2" -> asignada_intento_2
+            "en_ruta_intento_2" -> en_ruta_intento_2
+            "efectiva" -> efectiva
+            "cancelada" -> cancelada
+            "retorno" -> retorno
+            else -> null
+        }
+    }
+}
+
 fun parseJsonToUser(jsonString: String): User? {
     return try {
         Gson().fromJson(jsonString, User::class.java)
@@ -109,3 +136,4 @@ fun parseJsonToUser(jsonString: String): User? {
         null
     }
 }
+

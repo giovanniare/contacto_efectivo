@@ -39,7 +39,8 @@ retrofit2 = { module = "com.squareup.retrofit2:retrofit", version = "2.9.0" }
 convertergson = { module = "com.squareup.retrofit2:converter-gson", version = "2.9.0" }
 logininterceptor =  { module = "com.squareup.okhttp3:logging-interceptor", version = "4.9.3" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
-
+lottie = { module = "com.airbnb.android:lottie-compose", version = "6.1.0" }
+iconsextended  = { module = "androidx.compose.material:material-icons-extended" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

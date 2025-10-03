@@ -471,7 +471,7 @@ fun ThirdScreen(navController: NavController, viewModel: OperationsViewModel) {
         println("Data: ${parsedData}")
     }
 
-    selectedItem = if (viewModel.thirdOperationInCourse.value == true || operationStatus.value == "en ruta") {
+    selectedItem = if (viewModel.thirdOperationInCourse.value == true || operationStatus.value in  "en ruta") {
         "Finalizar ruta"
     } else {
         "Iniciar ruta"

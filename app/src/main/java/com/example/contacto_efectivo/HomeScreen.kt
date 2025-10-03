@@ -23,7 +23,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
@@ -226,6 +226,8 @@ fun HomeScreen(navController: NavController, viewModel: OperationsViewModel) {
 @Composable
 fun OperationsMenu(navController: NavController, viewModel: OperationsViewModel){
     var expanded by remember { mutableStateOf(false) }
+    var showAlert by remember { mutableStateOf(false) }
+    var selectorPopup by remember { mutableStateOf(false) }
 
     Button(
         onClick = {
@@ -238,33 +240,52 @@ fun OperationsMenu(navController: NavController, viewModel: OperationsViewModel)
             .wrapContentSize(unbounded = true)
     ) {
         Icon(
-            imageVector = Icons.Default.Menu,
-            contentDescription = "Entrega a domicilio",
+            imageVector = Icons.Filled.QrCodeScanner,
+            contentDescription = "Escanea operaciones de producto o internas",
             tint = Color(0xFF213E85)
         )
         Text(
-            text = stringResource(id = R.string.menu_opt),
+            text = stringResource(id = R.string.menu_scan),
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily(Font(R.font.inter_extrabold)),
             color = Color(0xFF213E85)
         )
     }
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        DropdownMenuItem(
+        /*DropdownMenuItem(
             text = {
-                Text(text = stringResource(id = R.string.opt_terceros))
+                Text(text = "Exito")
             },
             onClick = {
-                viewModel.tipoOperacion.value = "terceros"
-                navController.navigate("third_screen") }
+                navController.navigate("success_view") }
         )
+        DropdownMenuItem(
+            text = {
+                Text(text = "Error")
+            },
+            onClick = {
+                navController.navigate("error_view") }
+        )*/
+
+        DropdownMenuItem(
+            text = {
+                Text(text = stringResource(id = R.string.opt_ruta))
+            },
+            onClick = {
+                showAlert = true
+                expanded = false
+            }
+        )
+
         DropdownMenuItem(
             text = {
                 Text(text = stringResource(id = R.string.opt_prod))
             },
             onClick = {
                 viewModel.tipoOperacion.value = "producto"
-                navController.navigate("update_screen") }
+                expanded = false
+                navController.navigate("update_screen")
+            }
         )
         DropdownMenuItem(
             text = {
@@ -272,9 +293,28 @@ fun OperationsMenu(navController: NavController, viewModel: OperationsViewModel)
             },
             onClick = {
                 viewModel.tipoOperacion.value = "interna"
+                expanded = false
                 navController.navigate("update_screen") }
         )
     }
+
+    //Alerta de seguridad
+    ConfirmationPopup(
+        showPopup = showAlert,
+        onDismiss = { showAlert = false },
+        message = "¿Estas seguro que deseas enrutar multiples guias? Esta accion no se puede corregir",
+        onConfirm = {
+            showAlert = false
+            selectorPopup = true
+        }
+    )
+    // Selector de tipo de scanner
+    SelectorPopUp(
+        showPopup = selectorPopup,
+        onDismiss = { selectorPopup = false },
+        navController = navController,
+    )
+
 }
 
 @Composable

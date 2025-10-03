@@ -193,13 +193,17 @@ fun Options(
     }
 
     // Actualiza el valor de las opciones basado en el estado de operationStatus
+    val flujoOperaciones = viewModel.flujoOperaciones.value
+
     when (operationStatus.value) {
-        "creada" -> nextOptions = viewModel.agendada
-        "agendada" -> nextOptions = viewModel.agendada
-        "asignada" -> nextOptions = viewModel.agendada
-        "en ruta" -> nextOptions = viewModel.enRuta
-        //"efectiva" -> nextOptions = viewModel.efectiva
-        "transferencia" -> nextOptions = viewModel.transferecia
+        "asignada_intento_1" -> nextOptions = flujoOperaciones!!.asignada_intento_1
+        "en_ruta_intento_1" -> nextOptions = flujoOperaciones!!.en_ruta_intento_1
+        "intento_2" -> nextOptions = flujoOperaciones!!.intento_2
+        "asignada_intento_2" -> nextOptions = flujoOperaciones!!.asignada_intento_2
+        "en_ruta_intento_2" -> nextOptions = flujoOperaciones!!.en_ruta_intento_2
+        "efectiva" -> nextOptions = flujoOperaciones!!.efectiva
+        "cancelada" -> nextOptions = flujoOperaciones!!.cancelada
+        "retorno" -> nextOptions = flujoOperaciones!!.retorno
         else -> {
             canUpdateStatus.value = false
             nextOptions = viewModel.noMoreActions

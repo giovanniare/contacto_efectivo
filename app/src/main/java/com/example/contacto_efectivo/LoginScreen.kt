@@ -230,6 +230,7 @@ private fun accesoPermitido(
                         userManager.saveUser(userData)
                     }
 
+                    viewModel.getFlujoOperacion()
                     navToHome()
                 } else {
                     Toast.makeText(context, "Ingresa credenciales validas", Toast.LENGTH_SHORT).show()

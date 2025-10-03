@@ -10,69 +10,50 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
-
-
-/*@Composable
-fun BarcodeScannerScreen(onNavigateToHome: () -> Unit) {
-    BackHandler {
-        onNavigateToHome()
-    }
-
-    val context = LocalContext.current
-
-    // Solicitar permisos de cámara
-    val cameraPermissionGranted = remember { mutableStateOf(false) }
-    val requestPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        cameraPermissionGranted.value = isGranted
-    }
-
-    // Comprobar si tenemos permisos de cámara
-    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-        LaunchedEffect(Unit) {
-            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
-        }
-    } else {
-        cameraPermissionGranted.value = true
-    }
-
-    // Mostrar la cámara si tenemos permisos
-    if (cameraPermissionGranted.value) {
-        CameraPreviewWithBarcodeScanner()
-    } else {
-        Text("Necesitamos acceso a la cámara para escanear códigos.")
-    }
-}
+import kotlin.io.path.OnErrorResult
 
 @OptIn(ExperimentalGetImage::class)
 @Composable
-fun CameraPreviewWithBarcodeScanner() {
+fun BarcodeScannerScreen(
+    viewModel: OperationsViewModel, // Obtén una instancia del ViewModel
+    onCodeScanned: (String) -> Unit,
+    onNavigateBack: () -> Unit,
+    onNavigateToHome: () -> Unit = {},
+    multiscan: Boolean = false
+) {
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient()
     val executor = remember { Executors.newSingleThreadExecutor() }
 
-    // Estado para almacenar el valor del código escaneado
-    val scannedCode = remember { mutableStateOf<String?>(null) }
-
-    // Variable para almacenar el proveedor de la cámara para su liberación posterior
     var cameraProvider: ProcessCameraProvider? by remember { mutableStateOf(null) }
 
-    // Liberar la cámara cuando el Composable se destruye
     DisposableEffect(Unit) {
         onDispose {
             cameraProvider?.unbindAll()
@@ -80,89 +61,127 @@ fun CameraPreviewWithBarcodeScanner() {
     }
 
     LaunchedEffect(Unit) {
-        cameraProvider = cameraProviderFuture.get() // Guardamos el proveedor de la cámara
+        cameraProvider = cameraProviderFuture.get()
     }
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            AndroidView(
+                factory = { ctx ->
+                    val previewView = PreviewView(ctx)
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Vista previa de la cámara
-        AndroidView(
-            factory = { ctx ->
-                val previewView = PreviewView(ctx)
+                    val preview = Preview.Builder().build().also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                    }
 
-                val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
+                    val imageAnalyzer = ImageAnalysis.Builder()
+                        .setTargetResolution(Size(1280, 720))
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
 
-                val imageCapture = ImageCapture.Builder().build()
-                val imageAnalyzer = ImageAnalysis.Builder()
-                    .setTargetResolution(Size(1280, 720))
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-
-                imageAnalyzer.setAnalyzer(executor) { imageProxy ->
-                    val mediaImage = imageProxy.image
-                    if (mediaImage != null) {
-                        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                        barcodeScanner.process(image)
-                            .addOnSuccessListener { barcodes ->
-                                for (barcode in barcodes) {
-                                    when (barcode.valueType) {
-                                        Barcode.TYPE_URL -> {
-                                            scannedCode.value = barcode.url?.url
-                                        }
-                                        Barcode.TYPE_TEXT -> {
-                                            scannedCode.value = barcode.displayValue
+                    imageAnalyzer.setAnalyzer(executor) { imageProxy ->
+                        val mediaImage = imageProxy.image
+                        if (mediaImage != null) {
+                            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                            barcodeScanner.process(image)
+                                .addOnSuccessListener { barcodes ->
+                                    for (barcode in barcodes) {
+                                        when (barcode.valueType) {
+                                            Barcode.TYPE_URL -> {
+                                                viewModel.operationIdUrl.value = barcode.url?.url ?: ""
+                                                onCodeScanned(viewModel.operationIdUrl.value!!)
+                                                cameraProvider?.unbindAll()
+                                                onNavigateBack()
+                                            }
+                                            Barcode.TYPE_TEXT -> {
+                                                viewModel.operationId.value = barcode.displayValue ?: ""
+                                                println("Si estoy leyendo desde la pantalla scan: ${viewModel.operationId.value}")
+                                                onCodeScanned(viewModel.operationId.value!!)
+                                                cameraProvider?.unbindAll()
+                                                onNavigateBack()
+                                            }
+                                            else -> {
+                                                // 🔹 Extra: también soportamos QR explícitamente por formato
+                                                if (barcode.format == Barcode.FORMAT_QR_CODE) {
+                                                    viewModel.operationId.value = barcode.displayValue ?: ""
+                                                    println("Si estoy leyendo un QR desde la pantalla scan: ${viewModel.operationId.value}")
+                                                    onCodeScanned(viewModel.operationId.value!!)
+                                                    cameraProvider?.unbindAll()
+                                                    onNavigateBack()
+                                                }
+                                            }
                                         }
                                     }
                                 }
-                            }
-                            .addOnFailureListener {
-                                // Error al procesar
-                                Toast.makeText(ctx, "Error al escanear código", Toast.LENGTH_SHORT).show()
-                            }
-                            .addOnCompleteListener {
-                                imageProxy.close()
-                            }
+                                .addOnCompleteListener {
+                                    imageProxy.close()
+                                }
+                        }
                     }
-                }
 
-                try {
-                    cameraProvider = cameraProviderFuture.get()
-                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-                    cameraProvider?.bindToLifecycle(
-                        ctx as androidx.lifecycle.LifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        imageCapture,
-                        imageAnalyzer
-                    )
-                } catch (e: Exception) {
-                    Toast.makeText(ctx, "Error inicializando la cámara", Toast.LENGTH_SHORT).show()
-                }
+                    try {
+                        cameraProvider = cameraProviderFuture.get()
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-                previewView
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+                        cameraProvider?.bindToLifecycle(
+                            ctx as androidx.lifecycle.LifecycleOwner,
+                            cameraSelector,
+                            preview,
+                            imageAnalyzer
+                        )
+                    } catch (e: Exception) {
+                        Toast.makeText(ctx, "Error inicializando la cámara", Toast.LENGTH_SHORT).show()
+                    }
 
-        // Mostramos el valor del código escaneado
-        scannedCode.value?.let {
-            Text(
-                text = "Código escaneado: $it",
+                    previewView
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-            )
+                    .padding(40.dp)
+            ) {
+
+                Button(
+                    onClick = { onNavigateToHome() },
+                    shape = RoundedCornerShape(13.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF213E85)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            BorderStroke(1.dp, Color(0xFFE8D67E)),
+                            shape = RoundedCornerShape(13.dp)
+                        )
+                ) {
+                    Text(
+                        text = "Terminar de escanear",
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+                        color = Color.White
+                    )
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Entrega a domicilio",
+                        tint = Color.White
+                    )
+                }
+            }
         }
     }
-}*/
+
+}
+
+
+/*
 @OptIn(ExperimentalGetImage::class)
 @Composable
-fun BarcodeScannerScreen(
+fun MultiBarcodeScannerScreen(
     viewModel: OperationsViewModel, // Obtén una instancia del ViewModel
     onCodeScanned: (String) -> Unit,
-    onNavigateBack: () -> Unit
+    errorResult: () -> Unit,
+    successResult: () -> Unit,
+    onNavigateToHome: () -> Unit
 ) {
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
@@ -207,14 +226,14 @@ fun BarcodeScannerScreen(
                                             viewModel.operationIdUrl.value = barcode.url?.url ?: ""
                                             onCodeScanned(viewModel.operationIdUrl.value!!)
                                             cameraProvider?.unbindAll()
-                                            onNavigateBack()
+                                            successResult()
                                         }
                                         Barcode.TYPE_TEXT -> {
                                             viewModel.operationId.value = barcode.displayValue ?: ""
                                             println("Si estoy leyendo desde la pantalla scan: ${viewModel.operationId.value}")
                                             onCodeScanned(viewModel.operationId.value!!)
                                             cameraProvider?.unbindAll()
-                                            onNavigateBack()
+                                            successResult()
                                         }
                                     }
                                 }
@@ -243,113 +262,32 @@ fun BarcodeScannerScreen(
             },
             modifier = Modifier.fillMaxSize()
         )
-    }
-}
-
-@OptIn(ExperimentalGetImage::class)
-@Composable
-fun CameraPreviewWithBarcodeScanner(
-    onCodeScanned: (String) -> Unit // Función que se llama cuando se escanea un código
-) {
-    val context = LocalContext.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-    val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient()
-    val executor = remember { Executors.newSingleThreadExecutor() }
-
-    // Estado para almacenar el valor del código escaneado
-    val scannedCode = remember { mutableStateOf<String?>(null) }
-
-    // Variable para almacenar el proveedor de la cámara para su liberación posterior
-    var cameraProvider: ProcessCameraProvider? by remember { mutableStateOf(null) }
-
-    // Liberar la cámara cuando el Composable se destruye
-    DisposableEffect(Unit) {
-        onDispose {
-            cameraProvider?.unbindAll()
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        cameraProvider = cameraProviderFuture.get() // Guardamos el proveedor de la cámara
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Vista previa de la cámara
-        AndroidView(
-            factory = { ctx ->
-                val previewView = PreviewView(ctx)
-
-                val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
-
-                val imageCapture = ImageCapture.Builder().build()
-                val imageAnalyzer = ImageAnalysis.Builder()
-                    .setTargetResolution(Size(1280, 720))
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-
-                imageAnalyzer.setAnalyzer(executor) { imageProxy ->
-                    val mediaImage = imageProxy.image
-                    if (mediaImage != null) {
-                        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                        barcodeScanner.process(image)
-                            .addOnSuccessListener { barcodes ->
-                                for (barcode in barcodes) {
-                                    when (barcode.valueType) {
-                                        Barcode.TYPE_URL -> {
-                                            scannedCode.value = barcode.url?.url
-                                        }
-                                        Barcode.TYPE_TEXT -> {
-                                            scannedCode.value = barcode.displayValue
-                                        }
-                                    }
-
-                                    // Si se ha escaneado un código, finalizamos la cámara y volvemos
-                                    scannedCode.value?.let {
-                                        onCodeScanned(it) // Pasamos el código escaneado
-                                        cameraProvider?.unbindAll() // Detenemos la cámara
-                                    }
-                                }
-                            }
-                            .addOnFailureListener {
-                                // Error al procesar
-                                Toast.makeText(ctx, "Error al escanear código", Toast.LENGTH_SHORT).show()
-                            }
-                            .addOnCompleteListener {
-                                imageProxy.close()
-                            }
-                    }
-                }
-
-                try {
-                    cameraProvider = cameraProviderFuture.get()
-                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                    cameraProvider?.bindToLifecycle(
-                        ctx as androidx.lifecycle.LifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        imageCapture,
-                        imageAnalyzer
-                    )
-                } catch (e: Exception) {
-                    Toast.makeText(ctx, "Error inicializando la cámara", Toast.LENGTH_SHORT).show()
-                }
-
-                previewView
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Mostramos el valor del código escaneado (opcional)
-        scannedCode.value?.let {
-            Text(
-                text = "Código escaneado: $it",
+        Box(modifier = Modifier.fillMaxSize()) {
+            Button(
+                onClick = { onNavigateToHome() },
+                shape = RoundedCornerShape(13.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-            )
+                    .fillMaxWidth()
+                    .border(
+                        BorderStroke(1.dp, Color(0xFFE8D67E)),
+                        shape = RoundedCornerShape(13.dp)
+                    )
+            ) {
+                Text(
+                    text = "Terminar de escanear",
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+                    color = Color(0xFF213E85)
+                )
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Entrega a domicilio",
+                    tint = Color(0xFF213E85)
+                )
+            }
+
         }
     }
 }
+*/
