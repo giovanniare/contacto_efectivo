@@ -103,25 +103,21 @@ data class ProveedoresResponse(
 
 data class Flujo(
     val creada: List<String>,
-    val asignada_intento_1: List<String>,
-    val en_ruta_intento_1: List<String>,
-    val intento_2: List<String>,
-    val asignada_intento_2: List<String>,
-    val en_ruta_intento_2: List<String>,
-    val efectiva: List<String>,
-    val cancelada: List<String>,
-    val retorno: List<String>
+    val retorno: List<String>,
+    @SerializedName("Asignada intento 1") var asignadaIntento1: List<String>,
+    @SerializedName("Asignada intento 2") var asignadaIntento2: List<String>,
+    @SerializedName("en ruta intento 1") var enRutaIntento1: List<String>,
+    @SerializedName("ruta intento 2") var enRutaIntento2: List<String>,
+    @SerializedName("intento 2") var intento2: List<String>,
 ) {
     operator fun get(key: String): List<String>? {
         return when (key) {
             "creada" -> creada
-            "asignada_intento_1" -> asignada_intento_1
-            "en_ruta_intento_1" -> en_ruta_intento_1
-            "intento_2" -> intento_2
-            "asignada_intento_2" -> asignada_intento_2
-            "en_ruta_intento_2" -> en_ruta_intento_2
-            "efectiva" -> efectiva
-            "cancelada" -> cancelada
+            "Asignada intento 1" -> asignadaIntento1
+            "Asignada intento 2" -> asignadaIntento2
+            "intento 2" -> intento2
+            "en ruta intento 1" -> enRutaIntento1
+            "ruta intento 2" -> enRutaIntento2
             "retorno" -> retorno
             else -> null
         }

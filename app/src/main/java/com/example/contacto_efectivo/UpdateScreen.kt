@@ -110,8 +110,8 @@ fun UpdateScreen(navController: NavController, viewModel: OperationsViewModel) {
         // println("Data: ${parsedData}")
     }
 
-    LaunchedEffect(operationStatus.value) {
-        // Forzar la recomposición cuando cambia operationStatus
+    LaunchedEffect(viewModel.flujoOperaciones == null) {
+        viewModel.getFlujoOperacion()
     }
 
     Column(
@@ -193,16 +193,17 @@ fun Options(
     }
 
     // Actualiza el valor de las opciones basado en el estado de operationStatus
-    val flujoOperaciones = viewModel.flujoOperaciones.value
+    val flujoOperaciones = viewModel.flujoOperaciones
+    println("aqui el flujo de las operaciones")
+    println(flujoOperaciones)
 
     when (operationStatus.value) {
-        "asignada_intento_1" -> nextOptions = flujoOperaciones!!.asignada_intento_1
-        "en_ruta_intento_1" -> nextOptions = flujoOperaciones!!.en_ruta_intento_1
-        "intento_2" -> nextOptions = flujoOperaciones!!.intento_2
-        "asignada_intento_2" -> nextOptions = flujoOperaciones!!.asignada_intento_2
-        "en_ruta_intento_2" -> nextOptions = flujoOperaciones!!.en_ruta_intento_2
-        "efectiva" -> nextOptions = flujoOperaciones!!.efectiva
-        "cancelada" -> nextOptions = flujoOperaciones!!.cancelada
+        "creada" -> nextOptions = flujoOperaciones!!.creada
+        "Asignada intento 1" -> nextOptions = flujoOperaciones!!.asignadaIntento1
+        "Asignada intento 2" -> nextOptions = flujoOperaciones!!.asignadaIntento2
+        "intento 2" -> nextOptions = flujoOperaciones!!.intento2
+        "en ruta intento 1" -> nextOptions = flujoOperaciones!!.enRutaIntento1
+        "ruta intento 2" -> nextOptions = flujoOperaciones!!.enRutaIntento2
         "retorno" -> nextOptions = flujoOperaciones!!.retorno
         else -> {
             canUpdateStatus.value = false
@@ -366,14 +367,8 @@ fun Options(
             onClick = {
                 operationData?.imagen = viewModel.imageCompressed.value
                 println("Imagen bytearray: ${viewModel.imageCompressed.value}")
-                viewModel.imageName.value = null
-                viewModel.imageCompressed.value = null
-                viewModel.imageUri.value = null
                 if (operationData != null) {
-                    operationData.status = nextStatus.value
                     var codigo= operationData.codigo.toString()
-                    viewModel.operationSelected = null
-                    viewModel.getData.value = true
                     sendUpdate({
                         navController.navigate("home_screen") {
                             launchSingleTop = true // Evita duplicados en la pila
@@ -381,7 +376,7 @@ fun Options(
                             popUpTo("home_screen") { inclusive = true }
                         }
 
-                    }, operationData, codigo, context)
+                    }, operationData, codigo, context, nextStatus)
                 } else {
                     //
                 }
@@ -433,16 +428,17 @@ private fun sendUpdate(
     onNavigateToHome: () -> Unit,
     operationData: OperationApiResponse?,
     codigo: String,
-    context: Context
+    context: Context,
+    nextStatus: MutableState<String>
 ) {
     if (operationData != null) {
 
         val viewModel = OperationsViewModel()
         var canUpdate = false
 
-        if (viewModel.necesitaEvidencia.contains(operationData.status) && operationData.imagen != null) {
+        if (viewModel.necesitaEvidencia.contains(nextStatus.value) && operationData.imagen != null) {
             canUpdate = true
-        } else if (!viewModel.necesitaEvidencia.contains(operationData.status)) {
+        } else if (!viewModel.necesitaEvidencia.contains(nextStatus.value)) {
             canUpdate = true
         } else {
             canUpdate = false
@@ -469,8 +465,13 @@ private fun sendUpdate(
                 operationData.fecha_final = fechaFormateada
             }
 
+            operationData.status = nextStatus.value
             updateOperationStatus(codigo, operationData, tokenManager.getToken())
+            viewModel.operationSelected = null
             viewModel.getData.value = true
+            viewModel.imageName.value = null
+            viewModel.imageCompressed.value = null
+            viewModel.imageUri.value = null
 
             onNavigateToHome()
 

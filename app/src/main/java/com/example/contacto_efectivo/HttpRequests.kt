@@ -429,10 +429,10 @@ class HttpRequests {
 
     suspend fun getFlujo(): Flujo? {
 
-        println("Esta es la url que se manda: $urlApiBase_/flujo_operacion/")
+        println("Esta es la url que se manda: $urlApiBase_/flujo_operacion_2/")
         return withContext(Dispatchers.IO) {
             val request = Request.Builder()
-                .url("$urlApiBase_/flujo_operacion")
+                .url("$urlApiBase_/flujo_operacion_2")
                 .build()
 
             try {

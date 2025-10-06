@@ -38,7 +38,7 @@ class OperationsViewModel: ViewModel() {
     val transferecia = listOf("reagendada", "cancelada", "efectiva")
     val noMoreActions = listOf("efectiva", "cancelada", "finalizada", "reagendada", "intento_2", "retorno")
     val necesitaEvidencia = listOf("efectiva", "cancelada", "reagendada", "intento_2", "retorno")
-    val flujoOperaciones = mutableStateOf<Flujo?>(null)
+    var flujoOperaciones: Flujo? = null
 
     var statusMessage = mutableStateOf<String>("")
     var nextStatusScreen = mutableStateOf<String>("home_screen")
@@ -94,10 +94,11 @@ class OperationsViewModel: ViewModel() {
         viewModelScope.launch {
             try {
                 val response = apiClient.getFlujo()
-                flujoOperaciones.value = response
+                flujoOperaciones = response
+                println("Flujo de operaciones: $flujoOperaciones")
             } catch (e: Exception) {
                 println("No se pudo obtener el flujo de las operaciones")
-                flujoOperaciones.value = null
+                flujoOperaciones = null
             }
 
         }

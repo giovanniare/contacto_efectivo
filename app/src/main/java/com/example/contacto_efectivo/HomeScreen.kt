@@ -305,15 +305,15 @@ fun OperationsMenu(navController: NavController, viewModel: OperationsViewModel)
         message = "¿Estas seguro que deseas enrutar multiples guias? Esta accion no se puede corregir",
         onConfirm = {
             showAlert = false
-            selectorPopup = true
+            navController.navigate("multi_barcode_scan_screen")
         }
     )
-    // Selector de tipo de scanner
-    SelectorPopUp(
+
+    /*SelectorPopUp(
         showPopup = selectorPopup,
         onDismiss = { selectorPopup = false },
         navController = navController,
-    )
+    )*/
 
 }
 

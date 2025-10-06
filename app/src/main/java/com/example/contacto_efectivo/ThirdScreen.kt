@@ -145,7 +145,7 @@ private fun StartRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Un
                     .padding(top = 0.3.dp)
             )
         }
-        if (count.value != "" && count.value != "0") {
+        if (count.value != "" && count.value.toInt() > 0) {
             Button(
                 onClick = {
                     if (viewModel.imageName.value != null) {
@@ -332,7 +332,6 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
         if (entregados.value > "" && devoluciones.value >= "") {
             Button(
                 onClick = {
-                    viewModel.thirdOperationInCourse.value = false
                     if (viewModel.imageName.value != null) {
                         val recibidos = viewModel.operationScaneed?.cantidad
                         if (recibidos == null) {
@@ -352,6 +351,7 @@ private fun EndRoute(onNavigateToHome: () -> Unit, onNavigateToPhoto: () -> Unit
                                 ).show()
                             }else {
                                 sendUpdate(viewModel, end = true, entregados = entregados.value, devoluciones = devoluciones.value, token =  token, context = context)
+                                viewModel.thirdOperationInCourse.value = false
                                 entregados.value = ""
                                 devoluciones.value = ""
                                 viewModel.getData.value = true
