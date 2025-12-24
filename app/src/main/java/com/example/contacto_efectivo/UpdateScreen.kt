@@ -451,7 +451,7 @@ private fun sendUpdate(
             var historial = operationData.historial
             val nuevoMovimiento = Movimiento(
                 fecha = System.currentTimeMillis(),
-                status = operationData.status,
+                status = nextStatus.value,
                 user = userName,
                 descripcion = "Operacion actualizada por un repartidor desde el app movil"
             )

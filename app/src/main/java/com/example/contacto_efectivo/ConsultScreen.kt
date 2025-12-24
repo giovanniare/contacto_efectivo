@@ -8,11 +8,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Phone
@@ -217,6 +220,7 @@ private fun ThirdConsultView(operacion: OperationApiResponse, viewModel: Operati
     val proveedor: Proveedor? = proveedores.find { it.id == operacion.idProveedor }
 
     Column {
+
         Text(
             text = "Codigo:",
             fontSize = 20.sp,
@@ -228,17 +232,19 @@ private fun ThirdConsultView(operacion: OperationApiResponse, viewModel: Operati
                 .align(Alignment.CenterHorizontally)
 
         )
-        Text(
-            text = "${operacion.codigo}",
-            fontSize = 20.sp,
-            color = Color.Black,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
-            modifier = Modifier
-                .padding(5.dp)
-                .align(Alignment.CenterHorizontally)
+        SelectionContainer(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Text(
+                text = "${operacion.codigo}",
+                fontSize = 20.sp,
+                color = Color.Black,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+                modifier = Modifier
+                    .padding(5.dp)
+                    .align(Alignment.CenterHorizontally)
 
-        )
+            )
+        }
         Text(
             text = "Estatus:",
             fontSize = 20.sp,
@@ -332,7 +338,6 @@ private fun ThirdConsultView(operacion: OperationApiResponse, viewModel: Operati
                 .padding(start = 27.dp)
 
         )
-
     }
 }
 
@@ -351,17 +356,19 @@ private fun GenericConsultView(operacion: OperationApiResponse, viewModel: Opera
                 .align(Alignment.CenterHorizontally)
 
         )
-        Text(
-            text = "${operacion.codigo}",
-            fontSize = 20.sp,
-            color = Color.Black,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily(Font(R.font.inter_extrabold)),
-            modifier = Modifier
-                .padding(5.dp)
-                .align(Alignment.CenterHorizontally)
+        SelectionContainer(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Text(
+                text = "${operacion.codigo}",
+                fontSize = 20.sp,
+                color = Color.Black,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily(Font(R.font.inter_extrabold)),
+                modifier = Modifier
+                    .padding(5.dp)
+                    .align(Alignment.CenterHorizontally)
 
-        )
+            )
+        }
         Text(
             text = "Estatus: ${operacion.status}",
             fontSize = 20.sp,
@@ -414,16 +421,18 @@ private fun GenericConsultView(operacion: OperationApiResponse, viewModel: Opera
                 .padding(start = 27.dp)
 
         )
-        Text(
-            text = operacion.direccion_final ?: "N/A",
-            fontSize = 18.sp,
-            textAlign = TextAlign.Justify,
-            color = Color.Black,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .padding(start = 27.dp)
+        SelectionContainer {
+            Text(
+                text = operacion.direccion_final ?: "N/A",
+                fontSize = 18.sp,
+                textAlign = TextAlign.Justify,
+                color = Color.Black,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(start = 27.dp)
 
-        )
+            )
+        }
         Text(
             text = "Cliente:",
             fontSize = 18.sp,
@@ -444,6 +453,7 @@ private fun GenericConsultView(operacion: OperationApiResponse, viewModel: Opera
                 .padding(start = 27.dp)
 
         )
+        //}
         CallButton(operacion, viewModel)
     }
 }

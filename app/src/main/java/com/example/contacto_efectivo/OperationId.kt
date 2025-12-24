@@ -32,7 +32,7 @@ class OperationsViewModel: ViewModel() {
     var municipios = mutableStateOf<List<Municipio>>(emptyList())
     var proveedores = mutableStateOf<List<Proveedor>>(emptyList())
 
-    val agendada = listOf("en ruta", "cancelada", "efectiva")
+    val agendada = listOf("en ruta", "cancelada", "intento 2")
     val enRuta = listOf("efectiva", "transferencia", "reagendada", "cancelada")
     val efectiva = listOf("reagendada", "cancelada")
     val transferecia = listOf("reagendada", "cancelada", "efectiva")

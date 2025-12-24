@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.AccountCircle
@@ -426,17 +427,19 @@ fun ListItem(item: OperationApiResponse, operationMap: MutableMap<String?, Opera
     Column(modifier = Modifier
         .fillMaxWidth()
         .padding(16.dp)) {
-        Text(
-            text = "Código: ${codigo ?: "Sin código"} \n" +
-                "Tipo de Operación: ${item.id_tipo_operacion}",
-            textAlign = TextAlign.Justify,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF213E85),
-            fontSize = 14.sp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 4.dp)
-        )
+        SelectionContainer {
+            Text(
+                text = "Código: ${codigo ?: "Sin código"} \n" +
+                        "Tipo de Operación: ${item.id_tipo_operacion}",
+                textAlign = TextAlign.Justify,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF213E85),
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp)
+            )
+        }
         Row(
             horizontalArrangement = Arrangement.Absolute.Left,
             modifier = Modifier
