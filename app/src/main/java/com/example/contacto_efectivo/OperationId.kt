@@ -38,6 +38,8 @@ class OperationsViewModel: ViewModel() {
     val transferecia = listOf("reagendada", "cancelada", "efectiva")
     val noMoreActions = listOf("efectiva", "cancelada", "finalizada", "reagendada", "intento 2", "retorno")
     val necesitaEvidencia = listOf("efectiva", "cancelada", "reagendada", "intento 2", "retorno")
+    val asignadas = listOf("asignada", "Asignada intento 1", "Asignada intento 2")
+
     var flujoOperaciones: Flujo? = null
 
     var statusMessage = mutableStateOf<String>("")

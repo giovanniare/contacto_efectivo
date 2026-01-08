@@ -13,6 +13,9 @@ import androidx.compose.runtime.collectAsState
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -90,7 +93,7 @@ fun ThinkingView(
                 vibratePhone(context, 700)
                 navController.navigate("error_view")
             }
-            else if (op.status != "asignada") {
+            else if (op.status !in viewModel.asignadas) {
                 viewModel.nextStatusScreen.value = "multi_barcode_scan_screen"
                 viewModel.statusMessage.value = "No es posible volver a enrutar esta operacion"
                 vibratePhone(context, 700)
@@ -106,7 +109,21 @@ fun ThinkingView(
 
                 historial = historial?.plus(nuevoMovimiento)
                 op.historial = historial
-                op.status = "en ruta"
+
+                var nextOption = mutableStateOf("")
+
+                when (op.status) {
+                    "asignada" -> nextOption.value = "en ruta"
+                    "Asignada intento 1" -> nextOption.value = "en ruta intento 1"
+                    "Asignada intento 2" -> nextOption.value = "ruta intento 2"
+                    else -> {
+                        viewModel.nextStatusScreen.value = "multi_barcode_scan_screen"
+                        viewModel.statusMessage.value = "No es posible volver a enrutar esta operacion"
+                        vibratePhone(context, 700)
+                        navController.navigate("error_view")
+                    }
+                }
+                op.status = nextOption.value
 
                 updateOperationStatus(op.codigo!!, op, token)
 

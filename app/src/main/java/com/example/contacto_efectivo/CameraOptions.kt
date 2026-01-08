@@ -2,6 +2,7 @@ package com.example.contacto_efectivo
 
 import android.util.Size
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
@@ -53,6 +54,10 @@ fun BarcodeScannerScreen(
     val executor = remember { Executors.newSingleThreadExecutor() }
 
     var cameraProvider: ProcessCameraProvider? by remember { mutableStateOf(null) }
+
+    BackHandler {
+        onNavigateToHome()
+    }
 
     DisposableEffect(Unit) {
         onDispose {
