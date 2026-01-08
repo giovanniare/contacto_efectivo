@@ -99,18 +99,7 @@ fun ThinkingView(
                 vibratePhone(context, 700)
                 navController.navigate("error_view")
             } else {
-                var historial = op.historial
-                val nuevoMovimiento = Movimiento(
-                    fecha = System.currentTimeMillis(),
-                    status = "en ruta",
-                    user = userName,
-                    descripcion = "Operacion actualizada por un repartidor desde el app movil"
-                )
-
-                historial = historial?.plus(nuevoMovimiento)
-                op.historial = historial
-
-                var nextOption = mutableStateOf("")
+                val nextOption = mutableStateOf("")
 
                 when (op.status) {
                     "asignada" -> nextOption.value = "en ruta"
@@ -124,6 +113,17 @@ fun ThinkingView(
                     }
                 }
                 op.status = nextOption.value
+
+                var historial = op.historial
+                val nuevoMovimiento = Movimiento(
+                    fecha = System.currentTimeMillis(),
+                    status = nextOption.value,
+                    user = userName,
+                    descripcion = "Operacion actualizada por un repartidor desde el app movil"
+                )
+
+                historial = historial?.plus(nuevoMovimiento)
+                op.historial = historial
 
                 updateOperationStatus(op.codigo!!, op, token)
 
