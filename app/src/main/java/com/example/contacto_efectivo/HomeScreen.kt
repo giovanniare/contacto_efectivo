@@ -429,8 +429,20 @@ fun ListItem(item: OperationApiResponse, operationMap: MutableMap<String?, Opera
         .padding(16.dp)) {
         SelectionContainer {
             Text(
-                text = "Código: ${codigo ?: "Sin código"} \n" +
+                text = "ID: ${item.id ?: "N/A"} - Código: ${codigo ?: "Sin código"} \n" +
                         "Tipo de Operación: ${item.id_tipo_operacion}",
+                textAlign = TextAlign.Justify,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF213E85),
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp)
+            )
+        }
+        SelectionContainer {
+            Text(
+                text = "Domicilio: ${item.direccion_final}",
                 textAlign = TextAlign.Justify,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF213E85),
