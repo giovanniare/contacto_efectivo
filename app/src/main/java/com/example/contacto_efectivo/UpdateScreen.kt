@@ -458,7 +458,7 @@ private fun sendUpdate(
 
             historial = historial?.plus(nuevoMovimiento)
             operationData.historial = historial
-            if (operationData.status === "efectiva") {
+            if (nextStatus.value == "efectiva") {
                 val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 val fechaFormateada = formatter.format(Date())
 
